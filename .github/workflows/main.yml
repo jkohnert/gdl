@@ -10,8 +10,8 @@ on:
   workflow_dispatch:
 
 # Tip: Use this action to debug with SSH.
-#      - name: Setup upterm session
-#        uses: lhotari/action-upterm@v1
+#      - name: Setup tmate session
+#        uses: mxschmitt/action-tmate@v3
  
 jobs:
   prelude:
@@ -224,6 +224,8 @@ jobs:
           scripts/build_gdl.sh configure
           scripts/build_gdl.sh build
           scripts/build_gdl.sh install
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
       - name: Package GDL
         shell: msys2 {0}  
         run: |
