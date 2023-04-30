@@ -83,7 +83,7 @@ namespace lib {
   {
     hid_t space;
   public:
-    hdf5_space_guard(hid_t space_) { space = space_; }
+    explicit hdf5_space_guard(hid_t space_) { space = space_; }
     ~hdf5_space_guard() { if(space) H5Sclose(space); }
   };
 
@@ -96,7 +96,7 @@ namespace lib {
   {
     hid_t type;
   public:
-    hdf5_type_guard(hid_t type_) { type = type_; }
+    explicit hdf5_type_guard(hid_t type_) { type = type_; }
     ~hdf5_type_guard() { H5Tclose(type); }
   };
 
@@ -109,7 +109,7 @@ namespace lib {
   {
     char* name;
   public:
-    hdf5_name_guard(char* name_) { name = name_; }
+    explicit hdf5_name_guard(char* name_) { name = name_; }
     ~hdf5_name_guard() { H5free_memory(name); }
   };
 
@@ -121,7 +121,7 @@ namespace lib {
   {
     hid_t plist;
   public:
-    hdf5_plist_guard(hid_t plist_) { plist = plist_; }
+    explicit hdf5_plist_guard(hid_t plist_) { plist = plist_; }
     ~hdf5_plist_guard() { if(plist) H5Pclose(plist); }
   };
 
@@ -225,7 +225,7 @@ namespace lib {
     /* find matching GDL type */
 
     int idx=0;
-    for (auto gdl_type: type_map) {
+    for (const auto& gdl_type: type_map) {
        for (auto hdf5_native_type: gdl_type){
 
           int comp = H5Tequal(h5type , hdf5_native_type);
@@ -273,7 +273,7 @@ namespace lib {
     case GDL_STRING:  native_type = H5T_C_S1;          break;
 
     case GDL_STRUCT:
-      native_type = hdf5_compound_create(static_cast<DStructGDL*>(data),e);
+      native_type = hdf5_compound_create(dynamic_cast<DStructGDL*>(data),e);
       break;
 
     default:
@@ -285,7 +285,7 @@ namespace lib {
 
     /* set size for string datatypes */
     if ( (data[0]).Type()==GDL_STRING ) {
-      size_t len = strlen( (*static_cast<DStringGDL*>(data))[0].c_str() );
+      size_t len = strlen( (*dynamic_cast<DStringGDL*>(data))[0].c_str() );
       if ( H5Tset_size(native_type, len+1) < 0 )
         { string msg; e->Throw(hdf5_error_message(msg)); }
     }
@@ -350,7 +350,7 @@ namespace lib {
       if (rank==1 && dims[0]==1) rank=0;
 
       if (debug) { /* print tag properties */
-        printf( "%*stag '%s' of rank %lld, dimensions are: (",
+        printf( "%*stag '%s' of rank %lu, dimensions are: (",
                 indent,"", tagName.c_str(), rank );
         for(int i=0; i<rank; i++)
           printf("%lld%s", tag->Dim(i), (i<rank-1) ? "," : "");
@@ -403,7 +403,7 @@ namespace lib {
       for(int i=0; i<rank; i++) dims[rank-1-i] = tag->Dim(i);
 
       if (debug) {
-        printf( "%*stag '%s' of rank %lld, dimensions are: (",
+        printf( "%*stag '%s' of rank %lu, dimensions are: (",
                 indent,"", tagName.c_str(), rank );
         for(int i=0; i<rank; i++)
           printf("%lld%s", tag->Dim(i), (i<rank-1) ? "," : "");
@@ -413,15 +413,15 @@ namespace lib {
 
       if ( tag->Type() == GDL_STRUCT ) { /* nested structure */
 
-        hdf5_compound_gather( static_cast<DStructGDL*>(tag),
+        hdf5_compound_gather( dynamic_cast<DStructGDL*>(tag),
                               buffer+member_offset, 0 , e );
 
       } else if ( tag->Type() == GDL_STRING ) { /* string data */
 
-        size_t len=1+strlen((*static_cast<DStringGDL*>(tag))[0].c_str());
+        size_t len=1+strlen((*dynamic_cast<DStringGDL*>(tag))[0].c_str());
         for(int i=0; i<tag->Size(); i++)
           strncpy( &buffer[member_offset+i*len],
-                   (char*)((*static_cast<DStringGDL*>(tag))[i].c_str()), len );
+                   (char*)((*dynamic_cast<DStringGDL*>(tag))[i].c_str()), len );
 
       } else { /* numeric data */
 
@@ -432,8 +432,6 @@ namespace lib {
     }
 
     indent-=2;
-
-    return;
   }
 
   // --------------------------------------------------------------------
@@ -478,8 +476,8 @@ namespace lib {
         {
           snprintf(type_lbl,200, "nested compound");
 
-          DStructDesc* cmp_desc = new DStructDesc("$truct");
-          DStructGDL* res = new DStructGDL(cmp_desc);
+          auto* cmp_desc = new DStructDesc("$truct");
+          auto* res = new DStructGDL(cmp_desc);
 
           hdf5_parse_compound( member_type, res, &raw[member_offs], e );
           parent_struct->NewTag(member_name, res);
@@ -542,7 +540,7 @@ namespace lib {
 
       // create the IDL datatypes
       dimension dim(count_s, rank_s);
-      BaseGDL *field=NULL;
+      BaseGDL *field = nullptr;
       DLong ourType = mapH5DatatypesToGDL(elem_type,e);
 
       if (ourType == GDL_BYTE) {
@@ -573,7 +571,7 @@ namespace lib {
 
         // allocate string buffer
         char* name = static_cast<char*>(calloc(member_sz,sizeof(char)));
-        if (name == NULL) e->Throw("Failed to allocate memory!");
+        if (name == nullptr) e->Throw("Failed to allocate memory!");
         hdf5_name_guard name_guard = hdf5_name_guard(name);
 
         // create GDL variable
@@ -583,7 +581,7 @@ namespace lib {
         // assign array pointers
         for (size_t i=0; i<num_elems; i++) {
           strncpy(name+str_len*i,&raw[member_offs+str_len*i],str_len);
-          (*(static_cast<DStringGDL*> (str_arr)))[i] = name+str_len*i;
+          (*(dynamic_cast<DStringGDL*> (str_arr)))[i] = name+str_len*i;
         }
 
         // re-shape array & add as tag
@@ -598,7 +596,6 @@ namespace lib {
     }
 
     indent-=2;
-    return;
   }
 
   // --------------------------------------------------------------------
@@ -622,8 +619,6 @@ namespace lib {
       break;
     }
     if (status < 0) { string msg; e->Throw(hdf5_error_message(msg)); }
-
-    return;
   }
 
   // --------------------------------------------------------------------
@@ -662,18 +657,18 @@ namespace lib {
 
     /* --- assert contiguous write buffer --- */
 
-    char *buffer=NULL;
-    void *data_addr=NULL;
+    char *buffer = nullptr;
+    void *data_addr = nullptr;
 
 
     if (H5Tget_class(elem_type_id)==H5T_COMPOUND) {         /* --- struct */
 
-      DStructGDL* d_struct = static_cast<DStructGDL*>(data);
+      auto* d_struct = dynamic_cast<DStructGDL*>(data);
       hsize_t n_elem=d_struct->N_Elements(),
               len=d_struct->SizeofTags()+struct_NBytes_0(d_struct);
 
       data_addr = buffer = static_cast<char*>(calloc(n_elem*len,sizeof(char)));
-      if (buffer == NULL) e->Throw("Failed to allocate memory!");
+      if (buffer == nullptr) e->Throw("Failed to allocate memory!");
 
       for (hsize_t idx=0; idx<n_elem; idx++)
          hdf5_compound_gather(d_struct, &buffer[idx*len], idx, e);
@@ -683,11 +678,11 @@ namespace lib {
       size_t n_elem=data->Size(), len=H5Tget_size(elem_type_id);
 
       data_addr = buffer = static_cast<char*>(calloc(n_elem*len,sizeof(char)));
-      if (buffer == NULL) e->Throw("Failed to allocate memory!");
+      if (buffer == nullptr) e->Throw("Failed to allocate memory!");
 
       for(int i=0; i<n_elem; i++)
         strncpy( &buffer[i*len],
-                 (*static_cast<DStringGDL*>(data))[i].c_str(), len );
+                 (*dynamic_cast<DStringGDL*>(data))[i].c_str(), len );
 
 
     } else data_addr = data->DataAddr();                    /* --- numeric */
@@ -716,9 +711,7 @@ namespace lib {
 
     /* --- free resources --- */
 
-    if(buffer) free(buffer), buffer=NULL;
-
-    return;
+    if(buffer) free(buffer), buffer = nullptr;
   }
 
   // --------------------------------------------------------------------
@@ -791,7 +784,7 @@ namespace lib {
     if ( (data_rank = H5Sget_simple_extent_ndims(ms_id)) < 0 )
       { string msg; e->Throw(hdf5_error_message(msg)); }
 
-    if ( H5Sget_simple_extent_dims(ms_id, data_dims, NULL) < 0 )
+    if ( H5Sget_simple_extent_dims(ms_id, data_dims, nullptr) < 0 )
       { string msg; e->Throw(hdf5_error_message(msg)); }
 
     if (debug) {
@@ -807,7 +800,7 @@ namespace lib {
     SizeT count_s[MAXRANK];
     SizeT rank_s;
 
-    rank_s = (SizeT) (elem_rank + data_rank);
+    rank_s = elem_rank + data_rank;
 
     // need to reverse indices for column major format
     for(int i=0; i<elem_rank; i++)
@@ -820,7 +813,7 @@ namespace lib {
     dimension dim(count_s, rank_s);
 
     BaseGDL *res;
-    hsize_t type;
+    hid_t type;
     DLong ourType = mapH5DatatypesToGDL(elem_dtype,e);
 
     if (debug)  cout << "ourType : " << ourType  << endl;
@@ -883,7 +876,7 @@ namespace lib {
 
       // assign array pointers
       for (size_t i=0; i<num_elems; i++)
-        (*(static_cast<DStringGDL*> (res)))[i] = raw + str_len*i;
+        (*(dynamic_cast<DStringGDL*> (res)))[i] = raw + str_len*i;
 
       // re-shape array to match dataset
       (static_cast<BaseGDL*>(res))->SetDim(dim);
@@ -897,8 +890,8 @@ namespace lib {
        if(data_rank>0)
           e->Throw("Only scalar dataspaces supported for compound datasets.");
 
-       DStructDesc* cmp_desc = new DStructDesc("$truct");
-       DStructGDL* res = new DStructGDL(cmp_desc);
+       auto* cmp_desc = new DStructDesc("$truct");
+       auto* result = new DStructGDL(cmp_desc);
 
        size_t cmp_sz = H5Tget_size(datatype);
        if (cmp_sz < 0) { string msg; e->Throw(hdf5_error_message(msg)); }
@@ -908,9 +901,9 @@ namespace lib {
        hdf5_basic_read( loc_id, datatype, ms_id, fs_id, raw.get(), e );
 
        // translate to GDL structure
-       hdf5_parse_compound( datatype, res, raw.get(), e );
+       hdf5_parse_compound(datatype, result, raw.get(), e );
 
-       return res;
+       return result;
 
     } else {
 
@@ -1103,7 +1096,7 @@ hid_t
     static int new_idx = e->KeywordIx("NEW_LOC_ID");
 
     /* create the link */
-    if (e->GetKW(new_idx)!=NULL) {
+    if (e->GetKW(new_idx) != nullptr) {
 
        hid_t new_loc_id = hdf5_input_conversion_kw(e,new_idx);
 
@@ -1162,7 +1155,7 @@ hid_t
     /* allocate string buffer */
     size_t len=link_info.u.val_size;
     char* linkval = static_cast<char*>(calloc(len+1,sizeof(char)));
-    if (linkval == NULL) e->Throw("Failed to allocate memory!");
+    if (linkval == nullptr) e->Throw("Failed to allocate memory!");
     hdf5_name_guard linkval_guard = hdf5_name_guard(linkval);
 
     /* obtain the value string */
@@ -1194,7 +1187,7 @@ hid_t
     static int new_idx = e->KeywordIx("NEW_LOC_ID");
 
     /* perform the move/rename operation */
-    if (e->GetKW(new_idx)!=NULL) {
+    if (e->GetKW(new_idx) != nullptr) {
 
        hid_t src_loc_id = loc_id;
        hid_t dst_loc_id = hdf5_input_conversion_kw(e,new_idx);
@@ -1226,12 +1219,12 @@ hid_t
     e->AssureScalarPar<DStringGDL>( 1, name);
 
     /* query the string length */
-    ssize_t len = H5Gget_comment(loc_id, name.c_str(), 0, NULL);
+    ssize_t len = H5Gget_comment(loc_id, name.c_str(), 0, nullptr);
     if( len < 0 ) { string msg; e->Throw(hdf5_error_message(msg)); }
 
     /* allocate string buffer */
     char* comment_str = static_cast<char*>(calloc(len+1,sizeof(char)));
-    if (comment_str == NULL) e->Throw("Failed to allocate memory!");
+    if (comment_str == nullptr) e->Throw("Failed to allocate memory!");
     hdf5_name_guard comment_str_guard = hdf5_name_guard(comment_str);
 
     /* obtain the comment string */
@@ -1282,9 +1275,9 @@ hid_t
     e->AssureScalarPar<DStringGDL>( 1, h5gGroupname);
 
     /* use 'H5Giterate()' to count members (as per IDL manual) */
-    size_t nmembers=0;
+    Data_<SpDLong>::Ty nmembers = 0;
     if ( H5Giterate( h5f_id, h5gGroupname.c_str(),
-                     NULL, count_members, &nmembers ) < 0 )
+                     nullptr, count_members, &nmembers ) < 0 )
        { string msg; e->Throw(hdf5_error_message(msg)); }
 
     return new DLongGDL( nmembers );
@@ -1368,8 +1361,8 @@ hid_t
                         static_cast<DULong>(statbuf.objno[1]) };
 
     /* create return object */
-    DStructDesc* res_desc = new DStructDesc("H5G_STAT");
-    DStructGDL* res = new DStructGDL(res_desc);
+    auto* res_desc = new DStructDesc("H5G_STAT");
+    auto* res = new DStructGDL(res_desc);
 
     /* populate the GDL structure */
     res->NewTag("FILENO", new DULongGDL(fileno,2));
@@ -1406,7 +1399,7 @@ hid_t
     if ( H5Gget_num_objs(loc_id, &num) < 0 )
       { string msg; e->Throw(hdf5_error_message(msg)); }
 
-    return new DLongGDL( num );
+    return new DLongGDL( (int)num );
 
   }
 
@@ -1425,7 +1418,7 @@ hid_t
     e->AssureLongScalarPar(1, index);
 
     ssize_t len =
-       H5Gget_objname_by_idx(loc_id, index, NULL, 0);
+       H5Gget_objname_by_idx(loc_id, index, nullptr, 0);
     if( len < 0 )
        { string msg; e->Throw(hdf5_error_message(msg)); }
     else if ( len == 0 )
@@ -1433,7 +1426,7 @@ hid_t
 
     /* allocate string buffer */
     char* obj_name = static_cast<char*>(calloc(len+1,sizeof(char)));
-    if (obj_name == NULL) e->Throw("Failed to allocate memory!");
+    if (obj_name == nullptr) e->Throw("Failed to allocate memory!");
     hdf5_name_guard obj_name_guard = hdf5_name_guard(obj_name);
 
     /* obtain the member name */
@@ -1510,8 +1503,6 @@ hid_t
     /* --- write the dataset to file ---*/
 
     hdf5_unified_write( dset_id, data, H5I_BADID, H5I_BADID, e );
-
-    return;
   }
 
 
@@ -1530,8 +1521,7 @@ hid_t
 
     if (H5Adelete( loc_id, attr_name.c_str() ) < 0)
       e->Throw( "unable to delete attribute: (Object ID:"+i2s(loc_id)+
-                ", Object Name:\""+attr_name.c_str()+"\")" );
-    return;
+                ", Object Name:\""+attr_name+"\")" );
   }
 
 
@@ -1563,14 +1553,14 @@ hid_t
     // acquiring the name
     len++;
     char* name = static_cast<char*>(malloc(len * sizeof(char)));
-    if (name == NULL) e->Throw("Failed to allocate memory!");
+    if (name == nullptr) e->Throw("Failed to allocate memory!");
     if (H5Aget_name(h5a_id, len, name) < 0)
       {
         free(name);
         { string msg; e->Throw(hdf5_error_message(msg)); }
-        return NULL;
+        return nullptr;
       }
-    DStringGDL* ret = new DStringGDL(name);
+    auto* ret = new DStringGDL(name);
     free(name);
     return ret;
   }
@@ -1640,7 +1630,7 @@ hid_t
     int num = H5Aget_num_attrs( loc_id );
     if (num < 0) { string msg; e->Throw(hdf5_error_message(msg)); }
 
-    // following the doc., should return a "int"
+    // following the doc., should return an "int"
     return new DLongGDL( num );
   }
 
@@ -1668,7 +1658,7 @@ hid_t
     size_t size = H5Tget_size( h5t_id );
     if (size == 0) { string msg; e->Throw(hdf5_error_message(msg)); }
 
-    return new DLongGDL( size );
+    return new DLongGDL( (int)size );
 
   }
 
@@ -1678,14 +1668,14 @@ hid_t
     bool debug=false;
     SizeT nParam=e->NParam(2);
 
-    int rank;
+    SizeT rank;
     hsize_t dims[MAXRANK];
 
     /* mandatory 'Datatype_id' parameter */
     hid_t h5t_id=hdf5_input_conversion(e,0);
 
     /* mandatory 'Dimensions' parameter */
-    DUIntGDL* dimPar = e->GetParAs<DUIntGDL>(1);
+    auto* dimPar = e->GetParAs<DUIntGDL>(1);
     SizeT nDim = dimPar->N_Elements();
 
     if (nDim == 0)
@@ -1696,7 +1686,7 @@ hid_t
     for(int i=0; i<rank; i++) dims[i] = (hsize_t)(*dimPar)[rank-1-i];
 
     /* create the array datatype */
-    hid_t dtype_id = H5Tarray_create( h5t_id, rank, dims, NULL );
+    hid_t dtype_id = H5Tarray_create( h5t_id, (int)rank, dims, nullptr );
     if (dtype_id < 0) { string msg; e->Throw(hdf5_error_message(msg)); }
 
     return hdf5_output_conversion( dtype_id );
@@ -1720,11 +1710,11 @@ hid_t
 
     /* optional 'MEMBER_NAMES' keyword parameter */
     static int memNmIx = e->KeywordIx("MEMBER_NAMES");
-    if (e->GetKW(memNmIx)!=NULL) e->Throw("KW 'MEMBER_NAMES' not implemented.");
+    if (e->GetKW(memNmIx) != nullptr) e->Throw("KW 'MEMBER_NAMES' not implemented.");
 
     /* optional 'OPAQUE' keyword parameter */
     static int opaqueIx = e->KeywordIx("OPAQUE");
-    if (e->GetKW(opaqueIx)!=NULL) e->Throw("KW 'OPAQUE' not implemented.");
+    if (e->GetKW(opaqueIx) != nullptr) e->Throw("KW 'OPAQUE' not implemented.");
 
 
     /* --- determine HDF5 type and return datatype handle --- */
@@ -1758,16 +1748,16 @@ hid_t
     int rank = H5Sget_simple_extent_ndims(h5s_id);
     if (rank < 0) { string msg; e->Throw(hdf5_error_message(msg)); }
 
-    if (H5Sget_simple_extent_dims(h5s_id, dims_out, NULL) < 0)
+    if (H5Sget_simple_extent_dims(h5s_id, dims_out, nullptr) < 0)
       { string msg; e->Throw(hdf5_error_message(msg)); }
 
     if(rank == 0) return new DLongGDL(rank);
 
     dimension dim(rank);
-    DLongGDL* d = new DLongGDL(dim);
+    auto* d = new DLongGDL(dim);
 
     for(int i=0; i<rank; i++)
-      (*d)[i] = dims_out[rank - 1 - i];
+      (*d)[i] = (int)dims_out[rank - 1 - i];
 
     return d;
   }
@@ -1788,12 +1778,12 @@ hid_t
     bool debug=false;
     SizeT nParam=e->NParam(1);
 
-    int rank;
+    SizeT rank;
     hsize_t curr_dims[MAXRANK], max_dims[MAXRANK];
     hsize_t *p_max_dims=&max_dims[0];
 
     /* mandatory 'Dimensions' parameter */
-    DUIntGDL* dimPar = e->GetParAs<DUIntGDL>(0);
+    auto* dimPar = e->GetParAs<DUIntGDL>(0);
     SizeT nDim = dimPar->N_Elements();
 
     if (nDim == 0)
@@ -1801,15 +1791,15 @@ hid_t
     else
        rank=nDim;
 
-    if (debug) printf("dataspace rank=%d\n", rank);
+    if (debug) printf("dataspace rank=%llu\n", rank);
 
     for(int i=0; i<rank; i++) curr_dims[i] = (hsize_t)(*dimPar)[rank-1-i];
 
     /* keyword 'max_dimensions' paramter */
     static int maxDimIx = e->KeywordIx("MAX_DIMENSIONS");
-    if (e->GetKW(maxDimIx) != NULL) {
+    if (e->GetKW(maxDimIx) != nullptr) {
 
-      DIntGDL* maxDimKW = e->IfDefGetKWAs<DIntGDL>(maxDimIx);
+      auto* maxDimKW = e->IfDefGetKWAs<DIntGDL>(maxDimIx);
       SizeT nMaxDim = maxDimKW->N_Elements();
 
       if (nMaxDim == 0)
@@ -1826,23 +1816,23 @@ hid_t
       }
 
     } else
-       p_max_dims=NULL;
+       p_max_dims = nullptr;
 
     /* debug output */
     if (debug) {
       const hsize_t *par[2] = { curr_dims, max_dims };
       const char *parnm[2] = { "curr_dims", "max_dims" };
 
-      for(int i=0; i<1+(p_max_dims!=NULL); i++) {
+      for(int i=0; i<1+(p_max_dims!=nullptr); i++) {
         printf(" %s=[",parnm[i]);
         for(int j=0; j<rank; j++)
-          printf("%lld%s",par[i][j], (j==rank-1) ? "];" : ",");
+          printf("%lu%s",par[i][j], (j==rank-1) ? "];" : ",");
       }
       printf("\n");
     }
 
     /* create the simple dataspace */
-    hid_t space_id = H5Screate_simple( rank, curr_dims, p_max_dims );
+    hid_t space_id = H5Screate_simple( (int)rank, curr_dims, p_max_dims );
     if (space_id < 0) { string msg; e->Throw(hdf5_error_message(msg)); }
 
     return hdf5_output_conversion( space_id );
@@ -1867,7 +1857,7 @@ hid_t
 
 
     /* mandatory 'Start' parameter */
-    DUIntGDL* startPar = e->GetParAs<DUIntGDL>(1);
+    auto* startPar = e->GetParAs<DUIntGDL>(1);
     SizeT nStart = startPar->N_Elements();
 
     if (nStart == 0)
@@ -1879,7 +1869,7 @@ hid_t
 
 
     /* mandatory 'Count' parameter */
-    DUIntGDL* countPar = e->GetParAs<DUIntGDL>(2);
+    auto* countPar = e->GetParAs<DUIntGDL>(2);
     SizeT nCount = countPar->N_Elements();
 
     if (nCount == 0)
@@ -1892,9 +1882,9 @@ hid_t
 
     /* keyword 'block' parameter */
     static int blockIx = e->KeywordIx("BLOCK");
-    if (e->GetKW(blockIx) != NULL) {
+    if (e->GetKW(blockIx) != nullptr) {
 
-      DUIntGDL* blockKW = e->IfDefGetKWAs<DUIntGDL>(blockIx);
+      auto* blockKW = e->IfDefGetKWAs<DUIntGDL>(blockIx);
       SizeT nBlock = blockKW->N_Elements();
 
       if (nBlock == 0)
@@ -1915,9 +1905,9 @@ hid_t
 
     /* keyword 'stride' parameter */
     static int strideIx = e->KeywordIx("STRIDE");
-    if (e->GetKW(strideIx) != NULL) {
+    if (e->GetKW(strideIx) != nullptr) {
 
-      DUIntGDL* strideKW = e->IfDefGetKWAs<DUIntGDL>(strideIx);
+      auto* strideKW = e->IfDefGetKWAs<DUIntGDL>(strideIx);
       SizeT nStride = strideKW->N_Elements();
 
       if (nStride == 0)
@@ -1939,7 +1929,7 @@ hid_t
       for(int i=0; i<4; i++) {
         printf(" %s=[",parnm[i]);
         for(int j=0; j<rank; j++)
-          printf("%lld%s",par[i][j], (j==rank-1) ? "];" : ",");
+          printf("%lu%s",par[i][j], (j==rank-1) ? "];" : ",");
       }
       printf("\n");
     }
@@ -1955,7 +1945,6 @@ hid_t
       "Note: If all of the elements in the selected hyperslab region are
        already selected, then a new hyperslab region is not created." */
 
-    return;
   }
 
 
@@ -2138,8 +2127,6 @@ hid_t
     /* --- write the dataset to file ---*/
 
     hdf5_unified_write( dset_id, data, memspace_id, filespace_id, e );
-
-    return;
   }
 
 
@@ -2192,9 +2179,9 @@ hid_t
     /* --- optional keyword 'CHUNK_DIMENSIONS' paramter --- */
 
     static int chunkDimIx = e->KeywordIx("CHUNK_DIMENSIONS");
-    if (e->GetKW(chunkDimIx) != NULL) {
+    if (e->GetKW(chunkDimIx) != nullptr) {
 
-      DUIntGDL* chunkDimKW = e->IfDefGetKWAs<DUIntGDL>(chunkDimIx);
+      auto* chunkDimKW = e->IfDefGetKWAs<DUIntGDL>(chunkDimIx);
       SizeT nChunkDim = chunkDimKW->N_Elements();
 
       int rank;
@@ -2208,7 +2195,7 @@ hid_t
       else if(nChunkDim != rank)
         e->Throw("Number of elements in CHUNK_DIMENSIONS must equal dataspace.");
 
-      if ( H5Sget_simple_extent_dims(space_id, dims, NULL) < 0 )
+      if ( H5Sget_simple_extent_dims(space_id, dims, nullptr) < 0 )
         { string msg; e->Throw(hdf5_error_message(msg)); }
 
       for(int i=0; i<rank; i++) {
@@ -2236,14 +2223,14 @@ hid_t
   {
     SizeT nParam=e->NParam(2);
 
-    int rank, curr_rank;
+    SizeT rank, curr_rank;
     hsize_t size[MAXRANK], curr_size[MAXRANK];
 
     /* mandatory 'Dataset_id' parameter */
     hid_t h5d_id = hdf5_input_conversion(e,0);
 
     /* mandatory 'Size' parameter */
-    DUIntGDL* sizePar = e->GetParAs<DUIntGDL>(1);
+    auto* sizePar = e->GetParAs<DUIntGDL>(1);
     SizeT nDim = sizePar->N_Elements();
 
     if (nDim == 0)
@@ -2257,8 +2244,6 @@ hid_t
     /* extend the dataset dimensions */
     if( H5Dset_extent( h5d_id, size ) < 0 )
       e->Throw("unable to extend dataset: Object ID:"+i2s(h5d_id));
-
-    return;
   }
 
 
@@ -2364,7 +2349,7 @@ hid_t
     default: e->Throw("unsupported H5I type\n");
     }
 
-    return NULL;
+    return nullptr;
   }
 
 } // namespace

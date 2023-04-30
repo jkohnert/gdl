@@ -54,7 +54,7 @@
 #endif
 
 #ifdef HAVE_LOCALE_H
-#  include <locale.h>
+#  include <clocale>
 #endif
 
 // GDLDATADIR
@@ -106,7 +106,7 @@ void InitOpenMP() {
     // update of !cpu.TPOOL_NTHREADS
     DStructGDL* cpu = SysVar::Cpu();
     static unsigned NTHREADSTag = cpu->Desc()->TagIndex( "TPOOL_NTHREADS");
-    (*static_cast<DLongGDL*>( cpu->GetTag( NTHREADSTag, 0)))[0] =suggested_num_threads;
+    (*dynamic_cast<DLongGDL*>( cpu->GetTag( NTHREADSTag, 0)))[0] =suggested_num_threads;
 
     // effective global change of num of treads using omp_set_num_threads()
     CpuTPOOL_NTHREADS=suggested_num_threads;
@@ -135,13 +135,15 @@ void AtExit()
 void GDLSetLimits()
 {
 #define GDL_PREFERED_STACKSIZE  1024000000 //1000000*1024 like IDL
-struct rlimit* gdlstack=new struct rlimit;
-  int r=getrlimit(RLIMIT_STACK,gdlstack); 
+auto* gdlstack=new struct rlimit;
+  if (getrlimit(RLIMIT_STACK,gdlstack) == -1)
+    cerr << "Warning getting limit failed: errno is " << errno << endl;
 //  cerr <<"Current rlimit = "<<gdlstack->rlim_cur<<endl;
 //  cerr<<"Max rlimit = "<<  gdlstack->rlim_max<<endl;
-  if (gdlstack->rlim_cur >= GDL_PREFERED_STACKSIZE ) return; //the bigger the better.
+  if (gdlstack->rlim_cur >= GDL_PREFERED_STACKSIZE ) return; //the bigger, the better.
   if (gdlstack->rlim_max > GDL_PREFERED_STACKSIZE ) gdlstack->rlim_cur=GDL_PREFERED_STACKSIZE; //not completely satisfactory.
-  r=setrlimit(RLIMIT_STACK,gdlstack);
+  if (setrlimit(RLIMIT_STACK,gdlstack) == -1)
+    cerr << "Warning setting limit failed: errno is " << errno << endl;
 }
 #endif
 
@@ -200,34 +202,29 @@ namespace lib {
 #ifdef _WIN32
   bool posixpaths;
 #endif
-  bool gdlarg_present(const char* s)
-  {
-		for (size_t i = 0; i < command_line_args.size(); i++)
-			  if( command_line_args[i] == s )  return true;
-		return false;
-		  }
-  bool trace_arg()
-  {
-		for (size_t i = 0; i < command_line_args.size(); i++) 
-			  if( command_line_args[i] == "trace" )  return true;
-		return false;
-   }
 
+    bool gdlarg_present(const char *s) {
+        return any_of(command_line_args.begin(), command_line_args.end(),
+                      [s](const string &item) { return item == s; });
+    }
+
+    bool trace_arg() {
+        return any_of(command_line_args.begin(), command_line_args.end(),
+                      [](const string &item) { return item == "trace"; });
+    }
 }
 
 #include <whereami.h>
 
 namespace MyPaths {
   std::string getExecutablePath(){
-  char* path = NULL;
-  
+
   int length, dirname_length;
-  int i;
-  length = wai_getExecutablePath(NULL, 0, &dirname_length);
+  length = wai_getExecutablePath(nullptr, 0, &dirname_length);
   if (length > 0)
   {
-    path = (char*)malloc(length + 1);
-    if (!path) return std::string(".");
+    char* path = (char*)malloc(length + 1);
+    if (!path) return {"."};
     wai_getExecutablePath(path, length, &dirname_length);
     path[dirname_length] = '\0';
 //    printf("  dirname: %s\n", path);
@@ -235,7 +232,7 @@ namespace MyPaths {
     free(path);
     return pathstring;
   }
-  return std::string(".");
+  return {"."};
 }
 }
 
@@ -269,15 +266,15 @@ int main(int argc, char *argv[])
 
 //PATH. This one is often modified by people before starting GDL.
   string gdlPath=GetEnvPathString("GDL_PATH"); //warning: is a Path, use system separator.
-  if( gdlPath == "") gdlPath=GetEnvString("IDL_PATH"); //warning: is a Path, use system separator.
-  if( gdlPath == "") gdlPath = gdlDataDir + lib::PathSeparator() + "lib";
+  if( gdlPath.empty()) gdlPath = GetEnvString("IDL_PATH"); //warning: is a Path, use system separator.
+  if( gdlPath.empty()) gdlPath = gdlDataDir + lib::PathSeparator() + "lib";
 
 //LIBDIR. Can be '' in which case the location of drivers is deduced from the location of
 //the executable (OSX, Windows, unix in user-installed mode).
   string driversPath = GetEnvPathString("GDL_DRV_DIR");
-  if (driversPath == "") { //NOT enforced by GDL_DRV_DIR
+  if (driversPath.empty()) { //NOT enforced by GDL_DRV_DIR
     driversPath = gdlLibDir; //e.g. Fedora
-    if (driversPath == "") { //NOT enforced by GDLLIBDIR at build : not a distro
+    if (driversPath.empty()) { //NOT enforced by GDLLIBDIR at build : not a distro
       driversPath = gdlDataDir + lib::PathSeparator() + "drivers"; //deduced from the location of the executable 
     }
   }
@@ -405,11 +402,11 @@ int main(int argc, char *argv[])
           cerr << "gdl: -arg must be followed by a user argument." << endl;
           return 0;
         } 
-        lib::command_line_args.push_back(string(argv[++a]));
+        lib::command_line_args.emplace_back(argv[++a]);
       }
       else if( string( argv[a]) == "-args")
       {
-        for (int i = a + 1; i < argc; i++) lib::command_line_args.push_back(string(argv[i]));
+        for (SizeT i = a + 1; i < argc; i++) lib::command_line_args.emplace_back(argv[i]);
         break;
       }
       else if (string(argv[a])=="-quiet" | string(argv[a])=="--quiet" | string(argv[a])=="-q") 
@@ -507,15 +504,9 @@ int main(int argc, char *argv[])
       }
       else
       {
-        batch_files.push_back(argv[a]);
+        batch_files.emplace_back(argv[a]);
       }
     }
-
-  if (0&&statement.length() > 0 && batch_files.size() > 0) 
-  {
-    cerr << argv[0] << ": " << "-e option cannot be specified with batch files" << endl;
-    return 0;
-  }
   
   //before InitGDL() as InitGDL() starts graphic!
   
@@ -558,24 +549,24 @@ int main(int argc, char *argv[])
   //report in !GDL status struct
   DStructGDL* gdlconfig = SysVar::GDLconfig();
   unsigned  DSFMTTag= gdlconfig->Desc()->TagIndex("GDL_USE_DSFMT");
-  (*static_cast<DByteGDL*> (gdlconfig->GetTag(DSFMTTag, 0)))[0]=useDSFMTAcceleration;
+  (*dynamic_cast<DByteGDL*> (gdlconfig->GetTag(DSFMTTag, 0)))[0]=useDSFMTAcceleration;
   
   //same for use of wxwidgets
   unsigned  useWXTAG= gdlconfig->Desc()->TagIndex("GDL_USE_WX");
-  (*static_cast<DByteGDL*> (gdlconfig->GetTag(useWXTAG, 0)))[0]=useWxWidgetsForGraphics;
+  (*dynamic_cast<DByteGDL*> (gdlconfig->GetTag(useWXTAG, 0)))[0]=useWxWidgetsForGraphics;
   
   if (!pretendRelease.empty()) SysVar::SetFakeRelease(pretendRelease);
   //fussyness setup and change if switch at start
   if (syntaxOptionSet) { //take it no matters any env. var.
-    if (strict_syntax == true) SetStrict(true);
+    if (strict_syntax) SetStrict(true);
   } else {
-    if (GetEnvString("GDL_IS_FUSSY").size()> 0) SetStrict(true);
+    if (!GetEnvString("GDL_IS_FUSSY").empty()) SetStrict(true);
   }
   
   
   string startup=GetEnvPathString("GDL_STARTUP");
-  if( startup == "") startup=GetEnvPathString("IDL_STARTUP");
-  if( startup == "")
+  if( startup.empty()) startup=GetEnvPathString("IDL_STARTUP");
+  if( startup.empty())
     {
       if (gdlde || (isatty(0) && !quiet)) cerr << 
         "- No startup file read (GDL_STARTUP/IDL_STARTUP env. var. not set). " << endl;
@@ -603,10 +594,11 @@ int main(int argc, char *argv[])
   {
     // warning the user if MPI changes the working directory of GDL
     char wd1[PATH_MAX], wd2[PATH_MAX];
-    char *wd1p, *wd2p;
-    wd1p = getcwd(wd1, PATH_MAX);
+    if (getcwd(wd1, PATH_MAX) == nullptr)
+      cerr << "Warning: MPI getcwd() before initialization failed" << endl;
     MPI_Init(&argc, &argv);
-    wd2p = getcwd(wd2, PATH_MAX);
+    if (getcwd(wd2, PATH_MAX) == nullptr)
+      cerr << "Warning: MPI getcwd() after initialization failed" << endl;
     if (strcmp(wd1, wd2) != 0)
       cerr << "Warning: MPI has changed the working directory of GDL!" << endl;
   }
@@ -617,9 +609,9 @@ int main(int argc, char *argv[])
 
   int tag = 0;
   char* mpi_procedure = getenv("GDL_MPI");
-  if (myrank == 0 && mpi_procedure != NULL){
+  if (myrank == 0 && mpi_procedure != nullptr){
     for( SizeT i = 0; i < size; i++)
-      MPI_Send(mpi_procedure, strlen(mpi_procedure)+1, MPI_CHAR, i, 
+      MPI_Send(mpi_procedure, (int)strlen(mpi_procedure)+1, MPI_CHAR, (int)i,
 	       tag, MPI_COMM_WORLD);
   }
 #endif // USE_MPI
