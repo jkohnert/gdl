@@ -13,6 +13,17 @@ if (NOT EXISTS "${CMAKE_SOURCE_DIR}/src/whereami/.git" )
   message(FATAL_ERROR "The src/whereami git submodule is not initialised.\n Please run `git submodule update --init`")
 endif()
 
+# add warnings
+if (MSVC)
+    add_compile_options(/W4)
+    # not yet: make warnings fatal
+    #add_compile_options(/W4 /WX)
+else()
+    add_compile_options(-Wall -Wextra -pedantic)
+    # not yet: make warnings fatal
+    #add_compile_options(-Wall -Wextra -pedantic -Werror)
+endif()
+
 # create version string based on git metadata (based on https://github.com/nocnokneo/cmake-git-versioning-example)
 # in case version.hpp does not exist (it is shipped in GDL tarballs but not stored in the repo)
 if (NOT EXISTS "${CMAKE_SOURCE_DIR}/src/version.hpp")
