@@ -112,19 +112,19 @@ for jj=32765L, 32770 do begin
    input_as_long=LONG(input)
    result_as_long=BYTE(input_as_long)
    if ARRAY_EQUAL(expected, result_as_long) NE 1 then begin
-      ERRORS_ADD, nb_errors, 'input as Long for : '+STRING(input)
+      ERRORS_ADD, nb_errors, 'input as Long for : '+STRING(input)+', result as long : '+STRING(result_as_long)
    endif
    ;;
    ;; this one does fail in GDL now
    input_as_float=FLOAT(input)
    result_as_float=BYTE(input_as_float)
    if ARRAY_EQUAL(expected, result_as_float) NE 1 then begin
-      ERRORS_ADD, nb_errors, 'input as Long for : '+STRING(input)
+      ERRORS_ADD, nb_errors, 'input as Long for : '+STRING(input)+', result as float : '+STRING(result_as_float)
    endif
    ;;
-   ;if KEYWORD_SET(debug) then begin
+   if KEYWORD_SET(debug) then begin
       print, format='(A7, 4i7)', 'loop : ', input, expected, result_as_long, result_as_float
-   ;endif
+   endif
 endfor
 ;
 ; ----- final ----

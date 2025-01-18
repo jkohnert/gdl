@@ -8609,8 +8609,7 @@ namespace lib {
       return locale;
     }
     catch (const std::exception& ex) {
-      //e->Throw("locale_get: " + string(ex.what()));
-      std::cerr << "Error in locale_get: " << ex.what() << std::endl;
+      e->Throw("Unexpected error in locale_get(): " + string(ex.what()));
       return nullptr;
     }
   }
