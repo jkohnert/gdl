@@ -97,7 +97,7 @@ pro TEST_BYTE_BASIC_32768, cumul_errors, debug=debug, negative=negative, $
 ;
 nb_errors=0
 ;
-if KEYWORD_SET(debug) then print, 'loop, expected, res. as Long, res. as Float'
+print, 'loop, expected, res. as Long, res. as Float'
 ;
 for jj=32765L, 32770 do begin
    ;;

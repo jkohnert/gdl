@@ -264,9 +264,7 @@ int main(int argc, char *argv[])
   iAmANotebook = false; //option --notebook
   iAmMaster = true; //special option --subprocess
 #ifdef HAVE_LIBWXWIDGETS
-  #if defined (__WXMAC__)
-  useWxWidgets = true;
-  #elif defined (__WXMSW__)
+  #if defined (__WXMAC__) || defined (__WXMSW__)
   useWxWidgets = true;
   #else
   useWxWidgets = !GetEnvString("DISPLAY").empty();
