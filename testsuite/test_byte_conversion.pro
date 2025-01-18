@@ -97,7 +97,7 @@ pro TEST_BYTE_BASIC_32768, cumul_errors, debug=debug, negative=negative, $
 ;
 nb_errors=0
 ;
-print, 'loop, expected, res. as Long, res. as Float'
+if KEYWORD_SET(debug) then print, 'loop, expected, res. as Long, res. as Float'
 ;
 for jj=32765L, 32770 do begin
    ;;
@@ -122,9 +122,9 @@ for jj=32765L, 32770 do begin
       ERRORS_ADD, nb_errors, 'input as Long for : '+STRING(input)
    endif
    ;;
-   if KEYWORD_SET(debug) then begin
+   ;if KEYWORD_SET(debug) then begin
       print, format='(A7, 4i7)', 'loop : ', input, expected, result_as_long, result_as_float
-   endif
+   ;endif
 endfor
 ;
 ; ----- final ----
