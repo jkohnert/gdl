@@ -53,9 +53,7 @@
 #  include "mpi.h"
 #endif
 
-#ifdef HAVE_LOCALE_H
-#  include <locale.h>
-#endif
+#include <clocale>
 
 // GDLDATADIR
 #include "config.h"
@@ -102,7 +100,7 @@ void InitOpenMP() {
     // update of !cpu.TPOOL_NTHREADS
     DStructGDL* cpu = SysVar::Cpu();
     static unsigned NTHREADSTag = cpu->Desc()->TagIndex( "TPOOL_NTHREADS");
-    (*static_cast<DLongGDL*>( cpu->GetTag( NTHREADSTag, 0)))[0] =suggested_num_threads;
+    (*dynamic_cast<DLongGDL*>(cpu->GetTag( NTHREADSTag, 0)))[0] = suggested_num_threads;
 
     // effective global change of num of treads using omp_set_num_threads()
     CpuTPOOL_NTHREADS=suggested_num_threads;
@@ -125,16 +123,18 @@ void AtExit()
 }
 
 #ifndef _WIN32
-void GDLSetLimits()
-{
-#define GDL_PREFERED_STACKSIZE  1024000000 //1000000*1024 like IDL
-struct rlimit gdlstack;
-  int r=getrlimit(RLIMIT_STACK,&gdlstack); 
-//  cerr <<"Current rlimit = "<<gdlstack->rlim_cur<<endl;
-//  cerr<<"Max rlimit = "<<  gdlstack->rlim_max<<endl;
-  if (gdlstack.rlim_cur >= GDL_PREFERED_STACKSIZE ) return; //the bigger the better.
-  if (gdlstack.rlim_max > GDL_PREFERED_STACKSIZE ) gdlstack.rlim_cur=GDL_PREFERED_STACKSIZE; //not completely satisfactory.
-  r=setrlimit(RLIMIT_STACK,&gdlstack);
+void GDLSetLimits() {
+  constexpr auto gdlPreferredStackSize = 1024000000; //1000000*1024 like IDL
+  struct rlimit gdlstack{};
+
+  auto result = getrlimit(RLIMIT_STACK, &gdlstack);
+  if (result != 0) throw GDLException(DString("getrlimit failed with error: ") + strerror(errno));
+
+  if (gdlstack.rlim_cur >= gdlPreferredStackSize) return; //the bigger, the better.
+  if (gdlstack.rlim_max > gdlPreferredStackSize) gdlstack.rlim_cur = gdlPreferredStackSize; //not completely satisfactory.
+
+  result = setrlimit(RLIMIT_STACK, &gdlstack);
+  if (result != 0) throw GDLException(DString("setrlimit failed with error: ") + strerror(errno));
 }
 #endif
 
@@ -173,14 +173,10 @@ void InitGDL()
     
   // ensuring we work in the C locale (needs to be called after InitObjects and LibInit!!! 
   // as some code there calls setlocale as well, e.g. MagickInit)
-#ifdef HAVE_LOCALE_H
   setlocale(LC_ALL, "C");
-#endif
 
   lib::SetGDLGenericGSLErrorHandler();
 }
-
-static bool trace_me;
 
 // SA: for use in COMMAND_LINE_ARGS()
 namespace lib {
@@ -188,43 +184,32 @@ namespace lib {
 #ifdef _WIN32
   bool posixpaths;
 #endif
-  bool gdlarg_present(const char* s)
-  {
-		for (size_t i = 0; i < command_line_args.size(); i++)
-			  if( command_line_args[i] == s )  return true;
-		return false;
-		  }
+  bool gdlarg_present(const char* s) {
+    return std::any_of(command_line_args.begin(), command_line_args.end(), [s](const std::string &arg) { return arg == s; });
+  }
   bool trace_arg()
   {
-		for (size_t i = 0; i < command_line_args.size(); i++) 
-			  if( command_line_args[i] == "trace" )  return true;
-		return false;
-   }
-
+    return std::any_of(command_line_args.begin(), command_line_args.end(), [](const std::string &arg) { return arg == "trace"; });
+  }
 }
 
 #include <whereami.h>
 
 namespace MyPaths {
-  std::string getExecutablePath(){
-  char* path = NULL;
-  
-  int length, dirname_length;
-  int i;
-  length = wai_getExecutablePath(NULL, 0, &dirname_length);
-  if (length > 0)
-  {
-    path = (char*)malloc(length + 1);
-    if (!path) return std::string(".");
-    wai_getExecutablePath(path, length, &dirname_length);
-    path[dirname_length] = '\0';
-//    printf("  dirname: %s\n", path);
-    std::string pathstring(path);
-    free(path);
-    return pathstring;
+  std::string getExecutablePath() {
+    int length = wai_getExecutablePath(nullptr, 0, nullptr);
+    if (length > 0)
+    {
+      char* path = (char*)calloc(length + 1, sizeof(char));
+      if (!path) return {"."};
+      wai_getExecutablePath(path, length, nullptr);
+      path[length] = '\0';
+      std::string pathstring(path);
+      free(path);
+      return pathstring;
+    }
+    return {"."};
   }
-  return std::string(".");
-}
 }
 
 int main(int argc, char *argv[])
@@ -235,7 +220,7 @@ int main(int argc, char *argv[])
   bool gdlde = false;
   bool setQuietSysvar=false;
   bool willSuppressEditInput=false;
-  std::string myMessageBoxName="";
+  std::string myMessageBoxName;
   
 //The default installation location --- will not always be there.  
   gdlDataDir = std::string(GDLDATADIR);
@@ -257,11 +242,11 @@ int main(int argc, char *argv[])
 
 //PATH. This one is often modified by people before starting GDL.
   string gdlPath=GetEnvPathString("GDL_PATH"); //warning: is a Path, use system separator.
-  if( gdlPath == "") gdlPath=GetEnvString("IDL_PATH"); //warning: is a Path, use system separator.
-  if( gdlPath == "") gdlPath = gdlDataDir + lib::PathSeparator() + "lib";
+  if( gdlPath.empty()) gdlPath = GetEnvString("IDL_PATH"); //warning: is a Path, use system separator.
+  if( gdlPath.empty()) gdlPath = gdlDataDir + lib::PathSeparator() + "lib";
 
   char* wantCalm = getenv("IDL_QUIET");
-  if (wantCalm != NULL) setQuietSysvar=true;
+  if (wantCalm != nullptr) setQuietSysvar=true;
   
   // keeps a list of files to be executed after the startup file
   // and before entering the interactive mode
@@ -270,32 +255,28 @@ int main(int argc, char *argv[])
   string pretendRelease;
   bool strict_syntax=false;
   bool syntaxOptionSet=false;
-
+#ifdef HAVE_X
   bool force_no_wxgraphics = false;
-  usePlatformDeviceName=false;
+#endif
+  usePlatformDeviceName = false;
   tryToMimicOriginalWidgets = false;
   useDSFMTAcceleration = true;
-  iAmANotebook=false; //option --notebook
-  iAmMaster=true; //special option --subprocess
- #ifdef HAVE_LIBWXWIDGETS 
-
-    #if defined (__WXMAC__) 
-      useWxWidgets=true;
-    #elif defined (__WXMSW__)
-      useWxWidgets=true;
-    #else  
-      if (GetEnvString("DISPLAY").length() > 0) useWxWidgets=true; else useWxWidgets=false;
-    #endif
-  
+  iAmANotebook = false; //option --notebook
+  iAmMaster = true; //special option --subprocess
+#ifdef HAVE_LIBWXWIDGETS
+  #if defined (__WXMAC__) || defined (__WXMSW__)
+  useWxWidgets = true;
+  #else
+  useWxWidgets = !GetEnvString("DISPLAY").empty();
+  #endif
 #else
-  useWxWidgets=false;
+  useWxWidgets = false;
 #endif
 #ifdef _WIN32
   lib::posixpaths = false;
 #endif
-  for( SizeT a=1; a< argc; ++a)
-    {
-      if( string( argv[a]) == "--help" || string( argv[a]) == "-h") {
+  for( int a = 1; a < argc; ++a) {
+    if( string( argv[a]) == "--help" || string( argv[a]) == "-h") {
       cerr << "Usage: gdl [ OPTIONS ] [ batch_file ... ]" << endl;
       cerr << "Start the GDL interpreter (incremental compiler)" << endl;
       cerr << endl;
@@ -338,31 +319,25 @@ int main(int argc, char *argv[])
       cerr << "Homepage: https://gnudatalanguage.github.io" << endl;
       return 0;
     }
-      else if (string(argv[a])=="--version" || string(argv[a])=="-v" || string(argv[a])=="-V")
-	{
+    else if (string(argv[a])=="--version" || string(argv[a])=="-v" || string(argv[a])=="-V") {
 	  cerr << "GDL - GNU Data Language, Version " << VERSION << endl;
 	  return 0;
 	}
-      else if( string( argv[a]) == "-arg")
-      {
-        if (a == argc - 1)
-        {
-          cerr << "gdl: -arg must be followed by a user argument." << endl;
-          return 0;
-        } 
-        lib::command_line_args.push_back(string(argv[++a]));
+    else if( string( argv[a]) == "-arg") {
+      if (a == argc - 1) {
+        cerr << "gdl: -arg must be followed by a user argument." << endl;
+        return 0;
       }
-      else if( string( argv[a]) == "-args")
-      {
-        for (int i = a + 1; i < argc; i++) lib::command_line_args.push_back(string(argv[i]));
+      lib::command_line_args.emplace_back(argv[++a]);
+    }
+    else if (string(argv[a]) == "-args") {
+      for (int i = a + 1; i < argc; i++) lib::command_line_args.emplace_back(argv[i]);
         break;
-      }
-      else if (string(argv[a])=="-quiet" || string(argv[a])=="--quiet" || string(argv[a])=="-q") 
-	{
+    }
+    else if (string(argv[a])=="-quiet" || string(argv[a])=="--quiet" || string(argv[a])=="-q") {
 	  quiet = true;
 	}
-      else if (string(argv[a]).find("-pref=") ==0)
-	{
+    else if (string(argv[a]).find("-pref=") ==0) {
 	  cerr << "This option is not operational now" << endl;
 	  string tmp;
 	  tmp=string(argv[a]);
@@ -378,113 +353,101 @@ int main(int argc, char *argv[])
 	  }
 	  file_params.close();
 	}
-      else if (string(argv[a]) == "-e")
-	{
-	  if (a == argc - 1)
-	    {
-	      cerr << "gdl: -e must be followed by a user argument." << endl;
-	      return 0;
-	    }
+    else if (string(argv[a]) == "-e") {
+	  if (a == argc - 1) {
+        cerr << "gdl: -e must be followed by a user argument." << endl;
+        return 0;
+      }
 	  statement = string(argv[++a]);
 	  statement.append("\n"); // apparently not needed but this way the empty-string case is covered
 	  // (e.g. $ gdl -e "")
 	}
-      else if (
-	    string(argv[a]) == "-demo" || 
-        string(argv[a]) == "-em" || 
+    else if (
+        string(argv[a]) == "-demo" ||
+        string(argv[a]) == "-em" ||
         string(argv[a]) == "-novm" ||
         string(argv[a]) == "-queue" ||
         string(argv[a]) == "-rt" ||
         string(argv[a]) == "-ulicense" ||
-        string(argv[a]) == "-vm" 
-      )
-        cerr << argv[0] << ": " << argv[a] << " option ignored." << endl;
-      else if (string(argv[a]) == "-gdlde")
-      {
-          gdlde = true;
-      }
-      else if (string(argv[a]) == "--fussy")
-      {
-          strict_syntax = true;
-          syntaxOptionSet = true;
-      }
-      else if (string(argv[a]) == "--sloppy")
-      {
-          strict_syntax = false;
-          syntaxOptionSet = true;
-      }
-      else if (string(argv[a]) == "--no-dSFMT")
-      {
-           useDSFMTAcceleration = false;
-      }
-      else if (string(argv[a]) == "--widget-compat")
-      {
-          tryToMimicOriginalWidgets = true;
-      }      
+        string(argv[a]) == "-vm"
+    )
+      cerr << argv[0] << ": " << argv[a] << " option ignored." << endl;
+    else if (string(argv[a]) == "-gdlde") {
+      gdlde = true;
+    }
+    else if (string(argv[a]) == "--fussy") {
+      strict_syntax = true;
+      syntaxOptionSet = true;
+    }
+    else if (string(argv[a]) == "--sloppy") {
+      strict_syntax = false;
+      syntaxOptionSet = true;
+    }
+    else if (string(argv[a]) == "--no-dSFMT") {
+      useDSFMTAcceleration = false;
+    }
+    else if (string(argv[a]) == "--widget-compat") {
+        tryToMimicOriginalWidgets = true;
+    }
 #ifdef _WIN32
-      else if (string(argv[a]) == "--posix") lib::posixpaths=true;
+    else if (string(argv[a]) == "--posix") lib::posixpaths=true;
 #endif
-      else if (string(argv[a]) == "--MAC")
-      {
-         usePlatformDeviceName = true;
-      }
-      else if (string(argv[a]) == "--no-use-wx" ||  string(argv[a]) == "-X")
-      {
-         force_no_wxgraphics = true;
-      }
-      else if (string(argv[a]) == "--with-eigen-transpose")
-      {
-         useEigenForTransposeOps = true;
-      }
-      else if (string(argv[a]) == "--smart-tpool")
-      {
-         useSmartTpool = true;
-      }
-      else if (string(argv[a]) == "--notebook")
-      {
-         iAmANotebook = true;
-      }
-      else if (string(argv[a]) == "--silent")
-      {
-         setQuietSysvar=true;
-      }
-      else if (string(argv[a]) == "--subprocess") {
-		if (a == argc - 1) {
-		  cerr << "gdl: --subprocess must be followed by the parent's pid" << endl;
-		  return 0;
-		}
-		myMessageBoxName = argv[++a];
-	  	iAmMaster = false;
-		setQuietSysvar = true;
-		willSuppressEditInput = true;
-		//		 std::cerr<<"I am a SubProcess"<<std::endl;
-	  }
-      else if (string(argv[a]) == "--fakerelease")
-      {
-        if (a == argc - 1)
-          {
-            cerr << "gdl: --fakerelease must be followed by a string argument like \"6.4\"" << endl;
-            return 0;
-          }
-        pretendRelease = string(argv[++a]);
-	} else if (string(argv[a]) == "--clean-at-exit") {
-	  if (atexit(AtExit) != 0) cerr << "atexit registration failed. option \"--clean-at-exit\" unefficient." << endl;
-	} else if (*argv[a] == '-') {
-        cerr << argv[0] << ": " << argv[a] << " option not recognized." << endl;
+    else if (string(argv[a]) == "--MAC") {
+       usePlatformDeviceName = true;
+    }
+    else if (string(argv[a]) == "--no-use-wx" ||  string(argv[a]) == "-X") {
+#ifdef HAVE_X
+       force_no_wxgraphics = true;
+#endif
+    }
+    else if (string(argv[a]) == "--with-eigen-transpose") {
+       useEigenForTransposeOps = true;
+    }
+    else if (string(argv[a]) == "--smart-tpool") {
+       useSmartTpool = true;
+    }
+    else if (string(argv[a]) == "--notebook") {
+       iAmANotebook = true;
+    }
+    else if (string(argv[a]) == "--silent") {
+       setQuietSysvar=true;
+    }
+    else if (string(argv[a]) == "--subprocess") {
+      if (a == argc - 1) {
+        cerr << "gdl: --subprocess must be followed by the parent's pid" << endl;
         return 0;
       }
-      else
-      {
-        batch_files.push_back(argv[a]);
-      }
+      myMessageBoxName = argv[++a];
+      iAmMaster = false;
+      setQuietSysvar = true;
+      willSuppressEditInput = true;
+      //		 std::cerr<<"I am a SubProcess"<<std::endl;
     }
-
-  if (0&&statement.length() > 0 && batch_files.size() > 0) 
-  {
+    else if (string(argv[a]) == "--fakerelease") {
+      if (a == argc - 1)
+        {
+          cerr << "gdl: --fakerelease must be followed by a string argument like \"6.4\"" << endl;
+          return 0;
+        }
+      pretendRelease = string(argv[++a]);
+    }
+    else if (string(argv[a]) == "--clean-at-exit") {
+      if (atexit(AtExit) != 0) cerr << "atexit registration failed. option \"--clean-at-exit\" unefficient." << endl;
+    }
+    else if (*argv[a] == '-') {
+      cerr << argv[0] << ": " << argv[a] << " option not recognized." << endl;
+      return 0;
+    }
+    else {
+      batch_files.emplace_back(argv[a]);
+    }
+  }
+#if 0
+  if (!statement.empty() && !batch_files.empty()) {
     cerr << argv[0] << ": " << "-e option cannot be specified with batch files" << endl;
     return 0;
   }
-
+#endif
   //depending on master or not, attach to respective message boxes
   if (!iAmMaster) gdl_ipc_ClientGetsMailboxAddress(myMessageBoxName);	
   
@@ -505,7 +468,7 @@ int main(int argc, char *argv[])
   if (force_no_wxgraphics) useWxWidgetsForGraphics=false; //this has the last answer, whatever the setup.
 #endif  
   std::string doUseUglyFonts=GetEnvString("GDL_WIDGETS_COMPAT");
-  if ( doUseUglyFonts.length() > 0) tryToMimicOriginalWidgets=true; 
+  if ( !doUseUglyFonts.empty()) tryToMimicOriginalWidgets=true;
   
   InitGDL(); 
   
@@ -537,37 +500,36 @@ int main(int argc, char *argv[])
     cerr << "- Default library routine search path used (GDL_PATH/IDL_PATH env. var. not set): " << gdlPath << endl;
     if (useWxWidgetsForGraphics) cerr << "- Using WxWidgets as graphics library (windows and widgets)." << endl;
   }
-  if (useDSFMTAcceleration && (GetEnvString("GDL_NO_DSFMT").length() > 0)) useDSFMTAcceleration=false;
-  if (setQuietSysvar)       SysVar::Make_Quiet();
-  if (willSuppressEditInput)		 SysVar::Suppress_Edit_Input();  
+  if (useDSFMTAcceleration && (!GetEnvString("GDL_NO_DSFMT").empty())) useDSFMTAcceleration = false;
+  if (setQuietSysvar) SysVar::Make_Quiet();
+  if (willSuppressEditInput) SysVar::Suppress_Edit_Input();
   //report in !GDL status struct
   DStructGDL* gdlconfig = SysVar::GDLconfig();
   unsigned  DSFMTTag= gdlconfig->Desc()->TagIndex("GDL_USE_DSFMT");
-  (*static_cast<DByteGDL*> (gdlconfig->GetTag(DSFMTTag, 0)))[0]=useDSFMTAcceleration;
+  (*dynamic_cast<DByteGDL*> (gdlconfig->GetTag(DSFMTTag, 0)))[0]=useDSFMTAcceleration;
   
   //same for use of wxwidgets
   unsigned  useWXTAG= gdlconfig->Desc()->TagIndex("GDL_USE_WX");
-  (*static_cast<DByteGDL*> (gdlconfig->GetTag(useWXTAG, 0)))[0]=useWxWidgetsForGraphics;
+  (*dynamic_cast<DByteGDL*> (gdlconfig->GetTag(useWXTAG, 0)))[0]=useWxWidgetsForGraphics;
   
   if (!pretendRelease.empty()) SysVar::SetFakeRelease(pretendRelease);
   //fussyness setup and change if switch at start
   if (syntaxOptionSet) { //take it no matters any env. var.
-    if (strict_syntax == true) SetStrict(true);
+    if (strict_syntax) SetStrict(true);
   } else {
-    if (GetEnvString("GDL_IS_FUSSY").size()> 0) SetStrict(true);
+    if (!GetEnvString("GDL_IS_FUSSY").empty()) SetStrict(true);
   }
   
   
   string startup=GetEnvPathString("GDL_STARTUP");
-  if( startup == "") startup=GetEnvPathString("IDL_STARTUP");
-  if( startup == "")
-    {
-      if (gdlde || (isatty(0) && !quiet)) cerr << 
-        "- No startup file read (GDL_STARTUP/IDL_STARTUP env. var. not set). " << endl;
+  if( startup.empty()) startup=GetEnvPathString("IDL_STARTUP");
+  if( startup.empty()) {
+    if (gdlde || (isatty(0) && !quiet)) {
+      cerr << "- No startup file read (GDL_STARTUP/IDL_STARTUP env. var. not set). " << endl;
     }
+  }
 
-  if (gdlde || (isatty(0) && !quiet))
-  {
+  if (gdlde || (isatty(0) && !quiet)) {
     cerr << "- Please report bugs, feature or help requests and patches at: https://github.com/gnudatalanguage/gdl" << endl << endl;
   }
 //   else
@@ -586,28 +548,26 @@ int main(int argc, char *argv[])
 
 #ifdef USE_MPI
   if (iAmMaster) {
-  {
-    // warning the user if MPI changes the working directory of GDL
-    char wd1[PATH_MAX], wd2[PATH_MAX];
-    char *wd1p, *wd2p;
-    wd1p = getcwd(wd1, PATH_MAX);
-    MPI_Init(&argc, &argv);
-    wd2p = getcwd(wd2, PATH_MAX);
-    if (strcmp(wd1, wd2) != 0)
-      cerr << "Warning: MPI has changed the working directory of GDL!" << endl;
-  }
-  int myrank = 0;
-  MPI_Comm_rank( MPI_COMM_WORLD, &myrank);
-  int size; 
-  MPI_Comm_size(MPI_COMM_WORLD, &size);
+    {
+      // warning the user if MPI changes the working directory of GDL
+      char wd1[PATH_MAX], wd2[PATH_MAX];
+      getcwd(wd1, PATH_MAX);
+      MPI_Init(&argc, &argv);
+      getcwd(wd2, PATH_MAX);
+      if (strcmp(wd1, wd2) != 0)
+        cerr << "Warning: MPI has changed the working directory of GDL!" << endl;
+    }
+    int myrank = 0;
+    MPI_Comm_rank( MPI_COMM_WORLD, &myrank);
+    int size = 0;
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  int tag = 0;
-  char* mpi_procedure = getenv("GDL_MPI");
-  if (myrank == 0 && mpi_procedure != NULL){
-    for( SizeT i = 0; i < size; i++)
-      MPI_Send(mpi_procedure, strlen(mpi_procedure)+1, MPI_CHAR, i, 
-	       tag, MPI_COMM_WORLD);
-  }
+    int tag = 0;
+    char* mpi_procedure = getenv("GDL_MPI");
+    if (myrank == 0 && mpi_procedure != nullptr) {
+      for (int i = 0; i < size; i++)
+        MPI_Send(mpi_procedure, (int)strlen(mpi_procedure)+1, MPI_CHAR, i, tag, MPI_COMM_WORLD);
+    }
   }
 #endif // USE_MPI
 
