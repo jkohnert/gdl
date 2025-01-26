@@ -198,7 +198,10 @@ check_include_file(malloc.h HAVE_MALLOC_H)
 check_include_file(malloc/malloc.h HAVE_MALLOC_MALLOC_H)
 
 # locale
-check_include_file(locale.h HAVE_LOCALE_H)
+check_include_file_cxx(clocale HAVE_LOCALE_H)
+if (NOT HAVE_LOCALE_H)
+    message(FATAL_ERROR "Necessary c++ header clocale not found")
+endif()
 
 # std includes..
 check_include_file(stdint.h HAVE_STDINT_H)

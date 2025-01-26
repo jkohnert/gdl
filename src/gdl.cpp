@@ -53,9 +53,7 @@
 #  include "mpi.h"
 #endif
 
-#ifdef HAVE_LOCALE_H
-#  include <locale.h>
-#endif
+#include <clocale>
 
 // GDLDATADIR
 #include "config.h"
@@ -173,9 +171,7 @@ void InitGDL()
     
   // ensuring we work in the C locale (needs to be called after InitObjects and LibInit!!! 
   // as some code there calls setlocale as well, e.g. MagickInit)
-#ifdef HAVE_LOCALE_H
   setlocale(LC_ALL, "C");
-#endif
 
   lib::SetGDLGenericGSLErrorHandler();
 }
