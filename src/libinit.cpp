@@ -18,9 +18,7 @@
 #include "includefirst.hpp"
 
 #include <string>
-#include <fstream>
 
-#include "envt.hpp"
 #include "dpro.hpp"
 #include "objects.hpp"
 
@@ -85,7 +83,7 @@ void LibInit()
   LibInit_ac();
   LibInit_gm();
   LibInit_ng(); 
-  LibInit_jp(); //absence of wxWidgets will trigger a message for each finction using widgets.
+  LibInit_jp(); //absence of wxWidgets will trigger a message for each function using widgets.
   LibInit_exists();
 
   const char KLISTEND[] = "";
@@ -131,7 +129,7 @@ void LibInit()
 //  new DLibPro(lib::gdl_config_pro,string("GDL_CONFIG"),0,gdlconfigKey);
 
   const string get_kbrdKey[]={"ESCAPE","KEY_NAME",KLISTEND};
-  new DLibFunRetNew(lib::get_kbrd,string("GET_KBRD"),1,NULL,get_kbrdKey);
+  new DLibFunRetNew(lib::get_kbrd, string("GET_KBRD"), 1, nullptr, get_kbrdKey);
 
   const string svdcKey[]={"COLUMN","ITMAX","DOUBLE",KLISTEND};
   new DLibPro(lib::svdc,string("SVDC"),4,svdcKey);
@@ -172,12 +170,12 @@ void LibInit()
 			       "FTOXDR","DTOXDR","XDRTOF","XDRTOD",
              "DTOGFLOAT","GFLOATTOD", // obsoleted 2  keywords only on the VMS platform
 			       KLISTEND};
-  new DLibPro(lib::byteorder,string("BYTEORDER"),-1,byteorderKey,NULL,0,true);  //UsesThreadPOOL 
+  new DLibPro(lib::byteorder, string("BYTEORDER"), -1, byteorderKey, nullptr, 0, true);  //UsesThreadPOOL
 
   const string obj_classKey[]={"COUNT","SUPERCLASS",KLISTEND};
   new DLibFunRetNew(lib::obj_class,string("OBJ_CLASS"),1,obj_classKey);
 
-  new DLibFunRetNew(lib::obj_isa,string("OBJ_ISA"),2,NULL,NULL,false,2);
+  new DLibFunRetNew(lib::obj_isa, string("OBJ_ISA"), 2, nullptr, nullptr, false, 2);
   new DLibFunRetNew(lib::obj_hasmethod,string("OBJ_HASMETHOD"),2);
 
   const string rebinKey[]={"SAMPLE",KLISTEND};
@@ -214,10 +212,10 @@ void LibInit()
   new DLibFunRetNew(lib::expand_path,string("EXPAND_PATH"),1,expand_pathKey);
   
   const string strjoinKey[]={"SINGLE",KLISTEND};
-  new DLibFunRetNew(lib::strjoin,string("STRJOIN"),2,strjoinKey,NULL,true/*retConstant*/);
+  new DLibFunRetNew(lib::strjoin, string("STRJOIN"), 2, strjoinKey, nullptr, true/*retConstant*/);
 
   const string strcmpKey[]={"FOLD_CASE",KLISTEND};
-  new DLibFunRetNew(lib::strcmp_fun,string("STRCMP"),3,strcmpKey,NULL,true);
+  new DLibFunRetNew(lib::strcmp_fun, string("STRCMP"), 3, strcmpKey, nullptr, true);
 
   new DLibFunRetNew(lib::eof_fun,string("EOF"),1);
 
@@ -281,13 +279,13 @@ void LibInit()
   const string file_mkdirKey[]={"NOEXPAND_PATH",KLISTEND};
   new DLibPro(lib::file_mkdir,string("FILE_MKDIR"),-1,file_mkdirKey);
 
-  new DLibFunRetNew(lib::shift_fun,string("SHIFT"),9,NULL,NULL,true);
-  new DLibFunRetNewTP(lib::ishft_fun,string("ISHFT"),2,NULL,NULL,true);  //UsesThreadPOOL 
+  new DLibFunRetNew(lib::shift_fun, string("SHIFT"), 9, nullptr, nullptr, true);
+  new DLibFunRetNewTP(lib::ishft_fun, string("ISHFT"), 2, nullptr, nullptr, true);  //UsesThreadPOOL
 
   const string sortKey[]={"L64",KLISTEND};
-  new DLibFunRetNew(lib::sort_fun,string("SORT"),1,sortKey,NULL,true);
+  new DLibFunRetNew(lib::sort_fun, string("SORT"), 1, sortKey, nullptr, true);
   const string gdlsortKey[]={"L64","QUICK","MERGE","RADIX","INSERT","AUTO",KLISTEND}; //,"CHECK"
-  new DLibFunRetNew(lib::gdl_sort_fun,string("GDL_SORT"),1,gdlsortKey,NULL,true);
+  new DLibFunRetNew(lib::gdl_sort_fun, string("GDL_SORT"), 1, gdlsortKey, nullptr, true);
 
   const string medianKey[]={"EVEN","DOUBLE","DIMENSION",KLISTEND};
   new DLibFunRetNew(lib::median,string("MEDIAN"),2,medianKey);
@@ -298,7 +296,7 @@ void LibInit()
   const string momentKey[]={"DOUBLE","DIMENSION","NAN","KURTOSIS","MAXMOMENT","MDEV","MEAN","SDEV","SKEWNESS","VARIANCE",KLISTEND};
   new DLibFunRetNew(lib::moment_fun,string("MOMENT"),1,momentKey);
 
-  new DLibFunRetNew(lib::transpose,string("TRANSPOSE"),2,NULL,NULL,true);
+  new DLibFunRetNew(lib::transpose, string("TRANSPOSE"), 2, nullptr, nullptr, true);
 
   new DLibPro(lib::retall,string("RETALL"));
 
@@ -320,8 +318,8 @@ void LibInit()
   const string helpWarnKey[]={"BREAKPOINTS","DLM", "MESSAGES", KLISTEND};
   new DLibPro(lib::help_pro,string("HELP"),-1,helpKey,helpWarnKey);
 
-  new DLibPro(lib::delvar_pro,string("DELVAR"),-1,NULL,NULL);
-  DLibPro* hide = new DLibPro(lib::findvar_pro,string("FINDVAR"),-1,NULL,NULL);
+  new DLibPro(lib::delvar_pro, string("DELVAR"), -1, nullptr, nullptr);
+  auto hide = new DLibPro(lib::findvar_pro, string("FINDVAR"), -1, nullptr, nullptr);
   hide->SetHideHelp(true);
   
   //stub to avoid setting errors on pref_set. One may want to really write pref_set,
@@ -335,7 +333,7 @@ void LibInit()
   
   const string memoryKey[]={"CURRENT","HIGHWATER","NUM_ALLOC",
     "NUM_FREE","STRUCTURE","L64",KLISTEND};
-  new DLibFunRetNew(lib::memory_fun, string("MEMORY"), 1, memoryKey, NULL);
+  new DLibFunRetNew(lib::memory_fun, string("MEMORY"), 1, memoryKey, nullptr);
 
   // printKey, readKey and stringKey are closely associated
   // as the same functions are called "FORMAT" till "MONTH"
@@ -381,23 +379,23 @@ void LibInit()
   new DLibPro(lib::ptr_free,string("PTR_FREE"),-1);
 
   const string arrKey[]={"NOZERO",KLISTEND};
-  new DLibFunRetNew(lib::bytarr,string("BYTARR"),MAXRANK,arrKey,NULL,true/*retConstant*/);
-  new DLibFunRetNew(lib::intarr,string("INTARR"),MAXRANK,arrKey,NULL,true);
-  new DLibFunRetNew(lib::uintarr,string("UINTARR"),MAXRANK,arrKey,NULL,true);
-  new DLibFunRetNew(lib::lonarr,string("LONARR"),MAXRANK,arrKey,NULL,true);
-  new DLibFunRetNew(lib::ulonarr,string("ULONARR"),MAXRANK,arrKey,NULL,true);
-  new DLibFunRetNew(lib::lon64arr,string("LON64ARR"),MAXRANK,arrKey,NULL,true);
-  new DLibFunRetNew(lib::ulon64arr,string("ULON64ARR"),MAXRANK,arrKey,NULL,true);
-  new DLibFunRetNew(lib::fltarr,string("FLTARR"),MAXRANK,arrKey,NULL,true);
-  new DLibFunRetNew(lib::dblarr,string("DBLARR"),MAXRANK,arrKey,NULL,true);
-  new DLibFunRetNew(lib::complexarr,string("COMPLEXARR"),MAXRANK,arrKey,NULL,true);
-  new DLibFunRetNew(lib::dcomplexarr,string("DCOMPLEXARR"),MAXRANK,arrKey,NULL,true);
+  new DLibFunRetNew(lib::bytarr, string("BYTARR"), MAXRANK, arrKey, nullptr, true/*retConstant*/);
+  new DLibFunRetNew(lib::intarr, string("INTARR"), MAXRANK, arrKey, nullptr, true);
+  new DLibFunRetNew(lib::uintarr, string("UINTARR"), MAXRANK, arrKey, nullptr, true);
+  new DLibFunRetNew(lib::lonarr, string("LONARR"), MAXRANK, arrKey, nullptr, true);
+  new DLibFunRetNew(lib::ulonarr, string("ULONARR"), MAXRANK, arrKey, nullptr, true);
+  new DLibFunRetNew(lib::lon64arr, string("LON64ARR"), MAXRANK, arrKey, nullptr, true);
+  new DLibFunRetNew(lib::ulon64arr, string("ULON64ARR"), MAXRANK, arrKey, nullptr, true);
+  new DLibFunRetNew(lib::fltarr, string("FLTARR"), MAXRANK, arrKey, nullptr, true);
+  new DLibFunRetNew(lib::dblarr, string("DBLARR"), MAXRANK, arrKey, nullptr, true);
+  new DLibFunRetNew(lib::complexarr, string("COMPLEXARR"), MAXRANK, arrKey, nullptr, true);
+  new DLibFunRetNew(lib::dcomplexarr, string("DCOMPLEXARR"), MAXRANK, arrKey, nullptr, true);
 
-  new DLibFunRetNew(lib::strarr,string("STRARR"),MAXRANK,NULL,NULL,true);
+  new DLibFunRetNew(lib::strarr, string("STRARR"), MAXRANK, nullptr, nullptr, true);
 
   const string ptrArrKey[]={"ALLOCATE_HEAP","NOZERO",KLISTEND};
-  new DLibFunRetNew(lib::ptrarr,string("PTRARR"),MAXRANK,ptrArrKey,NULL,true);
-  new DLibFunRetNew(lib::objarr,string("OBJARR"),MAXRANK,arrKey,NULL,true);
+  new DLibFunRetNew(lib::ptrarr, string("PTRARR"), MAXRANK, ptrArrKey, nullptr, true);
+  new DLibFunRetNew(lib::objarr, string("OBJARR"), MAXRANK, arrKey, nullptr, true);
 
   const string ptr_newKey[]={"NO_COPY","ALLOCATE_HEAP",KLISTEND};
   new DLibFunRetNew(lib::ptr_new,string("PTR_NEW"),1,ptr_newKey);
@@ -421,20 +419,20 @@ void LibInit()
 			 "STRING","UINT","UL64","ULONG",
 			 "START", "INCREMENT", KLISTEND};
   const string xindKey[]={"START", "INCREMENT", KLISTEND};
-  new DLibFunRetNewTP(lib::bindgen,string("BINDGEN"),MAXRANK,xindKey,NULL,true);  //UsesThreadPOOL 
-  new DLibFunRetNewTP(lib::indgen,string("INDGEN"),MAXRANK,indKey,NULL,true);  //UsesThreadPOOL 
-  new DLibFunRetNewTP(lib::uindgen,string("UINDGEN"),MAXRANK,xindKey,NULL,true);  //UsesThreadPOOL 
-  new DLibFunRetNewTP(lib::sindgen,string("SINDGEN"),MAXRANK,xindKey,NULL,true);  //UsesThreadPOOL 
-  new DLibFunRetNewTP(lib::lindgen,string("LINDGEN"),MAXRANK,xindKey,NULL,true);  //UsesThreadPOOL 
-  new DLibFunRetNewTP(lib::ulindgen,string("ULINDGEN"),MAXRANK,xindKey,NULL,true);  //UsesThreadPOOL 
-  new DLibFunRetNewTP(lib::l64indgen,string("L64INDGEN"),MAXRANK,xindKey,NULL,true);  //UsesThreadPOOL 
-  new DLibFunRetNewTP(lib::ul64indgen,string("UL64INDGEN"),MAXRANK,xindKey,NULL,true);  //UsesThreadPOOL 
-  new DLibFunRetNewTP(lib::findgen,string("FINDGEN"),MAXRANK,xindKey,NULL,true);  //UsesThreadPOOL 
-  new DLibFunRetNewTP(lib::dindgen,string("DINDGEN"),MAXRANK,xindKey,NULL,true);  //UsesThreadPOOL 
-  new DLibFunRetNewTP(lib::cindgen,string("CINDGEN"),MAXRANK,xindKey,NULL,true);  //UsesThreadPOOL 
-  new DLibFunRetNewTP(lib::dcindgen,string("DCINDGEN"),MAXRANK,xindKey,NULL,true);  //UsesThreadPOOL 
+  new DLibFunRetNewTP(lib::bindgen, string("BINDGEN"), MAXRANK, xindKey, nullptr, true);  //UsesThreadPOOL
+  new DLibFunRetNewTP(lib::indgen, string("INDGEN"), MAXRANK, indKey, nullptr, true);  //UsesThreadPOOL
+  new DLibFunRetNewTP(lib::uindgen, string("UINDGEN"), MAXRANK, xindKey, nullptr, true);  //UsesThreadPOOL
+  new DLibFunRetNewTP(lib::sindgen, string("SINDGEN"), MAXRANK, xindKey, nullptr, true);  //UsesThreadPOOL
+  new DLibFunRetNewTP(lib::lindgen, string("LINDGEN"), MAXRANK, xindKey, nullptr, true);  //UsesThreadPOOL
+  new DLibFunRetNewTP(lib::ulindgen, string("ULINDGEN"), MAXRANK, xindKey, nullptr, true);  //UsesThreadPOOL
+  new DLibFunRetNewTP(lib::l64indgen, string("L64INDGEN"), MAXRANK, xindKey, nullptr, true);  //UsesThreadPOOL
+  new DLibFunRetNewTP(lib::ul64indgen, string("UL64INDGEN"), MAXRANK, xindKey, nullptr, true);  //UsesThreadPOOL
+  new DLibFunRetNewTP(lib::findgen, string("FINDGEN"), MAXRANK, xindKey, nullptr, true);  //UsesThreadPOOL
+  new DLibFunRetNewTP(lib::dindgen, string("DINDGEN"), MAXRANK, xindKey, nullptr, true);  //UsesThreadPOOL
+  new DLibFunRetNewTP(lib::cindgen, string("CINDGEN"), MAXRANK, xindKey, nullptr, true);  //UsesThreadPOOL
+  new DLibFunRetNewTP(lib::dcindgen, string("DCINDGEN"), MAXRANK, xindKey, nullptr, true);  //UsesThreadPOOL
 
-  new DLibFunRetNew(lib::n_elements,string("N_ELEMENTS"),1,NULL,NULL,true,1);
+  new DLibFunRetNew(lib::n_elements, string("N_ELEMENTS"), 1, nullptr, nullptr, true, 1);
 
   new DLibFun(lib::execute_fun,string("EXECUTE"),3);
 
@@ -492,7 +490,7 @@ void LibInit()
   const string assocKey[]={"PACKED",KLISTEND};
   new DLibFunRetNew(lib::assoc,string("ASSOC"),3,assocKey);
 
-  new DLibFun(lib::byte_fun,string("BYTE"),10,NULL,NULL,0,true);  //UsesThreadPOOL 
+  new DLibFun(lib::byte_fun, string("BYTE"), 10, nullptr, nullptr, 0, true);  //UsesThreadPOOL
 
 /*
   new DLibFunRetNew(lib::fix_fun,string("FIX"),10,fixKey,NULL,true);
@@ -508,29 +506,29 @@ void LibInit()
 */
 // that's apparently the desired bahaviour, see bug no. 3151760
   const string fixKey[]={"TYPE","PRINT","IMPLIED_PRINT",KLISTEND}; //Fix never uses IMPLIED_PRINT, but called print_os does.
-  new DLibFun(lib::fix_fun,string("FIX"),10,fixKey,NULL,0,true);  //UsesThreadPOOL 
+  new DLibFun(lib::fix_fun, string("FIX"), 10, fixKey, nullptr, 0, true);  //UsesThreadPOOL
 
-  new DLibFun(lib::uint_fun,string("UINT"),10,NULL,NULL,0,true);  //UsesThreadPOOL 
-  new DLibFun(lib::long_fun,string("LONG"),10,NULL,NULL,0,true);  //UsesThreadPOOL 
-  new DLibFun(lib::ulong_fun,string("ULONG"),10,NULL,NULL,0,true);  //UsesThreadPOOL 
-  new DLibFun(lib::long64_fun,string("LONG64"),10,NULL,NULL,0,true);  //UsesThreadPOOL 
-  new DLibFun(lib::ulong64_fun,string("ULONG64"),10,NULL,NULL,0,true);  //UsesThreadPOOL 
-  new DLibFun(lib::float_fun,string("FLOAT"),10,NULL,NULL,0,true);  //UsesThreadPOOL 
-  new DLibFun(lib::double_fun,string("DOUBLE"),10,NULL,NULL,0,true);  //UsesThreadPOOL 
+  new DLibFun(lib::uint_fun, string("UINT"), 10, nullptr, nullptr, 0, true);  //UsesThreadPOOL
+  new DLibFun(lib::long_fun, string("LONG"), 10, nullptr, nullptr, 0, true);  //UsesThreadPOOL
+  new DLibFun(lib::ulong_fun, string("ULONG"), 10, nullptr, nullptr, 0, true);  //UsesThreadPOOL
+  new DLibFun(lib::long64_fun, string("LONG64"), 10, nullptr, nullptr, 0, true);  //UsesThreadPOOL
+  new DLibFun(lib::ulong64_fun, string("ULONG64"), 10, nullptr, nullptr, 0, true);  //UsesThreadPOOL
+  new DLibFun(lib::float_fun, string("FLOAT"), 10, nullptr, nullptr, 0, true);  //UsesThreadPOOL
+  new DLibFun(lib::double_fun, string("DOUBLE"), 10, nullptr, nullptr, 0, true);  //UsesThreadPOOL
 
   const string complexKey[]={"DOUBLE",KLISTEND};
-  new DLibFun(lib::complex_fun,string("COMPLEX"),MAXRANK+2,complexKey,NULL,0,true);  //UsesThreadPOOL 
-  new DLibFun(lib::dcomplex_fun,string("DCOMPLEX"),MAXRANK+2,NULL,NULL,0,true);  //UsesThreadPOOL 
+  new DLibFun(lib::complex_fun, string("COMPLEX"), MAXRANK + 2, complexKey, nullptr, 0, true);  //UsesThreadPOOL
+  new DLibFun(lib::dcomplex_fun, string("DCOMPLEX"), MAXRANK + 2, nullptr, nullptr, 0, true);  //UsesThreadPOOL
 
-  new DLibFunRetNewTP(lib::gdl_logical_and,string("LOGICAL_AND"),2,NULL,NULL,true);  //UsesThreadPOOL 
-  new DLibFunRetNewTP(lib::gdl_logical_or,string("LOGICAL_OR"),2,NULL,NULL,true);  //UsesThreadPOOL 
+  new DLibFunRetNewTP(lib::gdl_logical_and, string("LOGICAL_AND"), 2, nullptr, nullptr, true);  //UsesThreadPOOL
+  new DLibFunRetNewTP(lib::gdl_logical_or, string("LOGICAL_OR"), 2, nullptr, nullptr, true);  //UsesThreadPOOL
   new DLibFunDirectTP(lib::logical_true,string("LOGICAL_TRUE"));  //UsesThreadPOOL 
 
-  new DLibFunRetNew(lib::replicate,string("REPLICATE"),9,NULL,NULL,true);
-  new DLibPro(lib::replicate_inplace_pro,string("REPLICATE_INPLACE"),6,NULL,NULL,0,true);  //UsesThreadPOOL 
-  new DLibFunDirectTP(lib::signum_fun,string("SIGNUM"));  //UsesThreadPOOL 
-  
-  new DLibFunDirectTP(lib::sin_fun,string("SIN"));  //UsesThreadPOOL 
+  new DLibFunRetNew(lib::replicate, string("REPLICATE"), 9, nullptr, nullptr, true);
+  new DLibPro(lib::replicate_inplace_pro, string("REPLICATE_INPLACE"), 6, nullptr, nullptr, 0, true);  //UsesThreadPOOL
+  new DLibFunDirectTP(lib::signum_fun, string("SIGNUM"));  //UsesThreadPOOL
+
+  new DLibFunDirectTP(lib::sin_fun,string("SIN"));  //UsesThreadPOOL
   new DLibFunDirectTP(lib::cos_fun,string("COS"));  //UsesThreadPOOL 
   new DLibFunDirectTP(lib::tan_fun,string("TAN"));  //UsesThreadPOOL 
 
@@ -541,7 +539,7 @@ void LibInit()
   new DLibFunDirectTP(lib::asin_fun,string("ASIN"));  //UsesThreadPOOL 
   new DLibFunDirectTP(lib::acos_fun,string("ACOS"));  //UsesThreadPOOL 
   const string atanKey[] = {"PHASE", KLISTEND};
-  new DLibFunRetNewTP(lib::atan_fun,string("ATAN"),2,atanKey,NULL,true);  //UsesThreadPOOL 
+  new DLibFunRetNewTP(lib::atan_fun, string("ATAN"), 2, atanKey, nullptr, true);  //UsesThreadPOOL
 
   new DLibFunDirectTP(lib::alog_fun,string("ALOG"));  //UsesThreadPOOL 
   new DLibFunDirectTP(lib::alog2_fun,string("ALOG2"));  //UsesThreadPOOL 
@@ -554,7 +552,7 @@ void LibInit()
 
   const string roundKey[]={"L64",KLISTEND};
   // retConstant: check definition of the rounding functions if they depend 
-  // from some sys var (defining a round mode) 
+  // on some sys var (defining a round mode)
   // (probably nobody rounds a constant anyway)
   const string roundceilfloorKey[]={"L64",KLISTEND};
   new DLibFunRetNewTP(lib::round_fun,string("ROUND"),1,roundceilfloorKey);  //UsesThreadPOOL 
@@ -566,49 +564,49 @@ void LibInit()
   new DLibFunDirectTP(lib::real_part_fun,string("REAL_PART"));
 
   const string strcompressKey[]={"REMOVE_ALL",KLISTEND};
-  new DLibFunRetNew(lib::strcompress,string("STRCOMPRESS"),1,strcompressKey,NULL,true);
+  new DLibFunRetNew(lib::strcompress, string("STRCOMPRESS"), 1, strcompressKey, nullptr, true);
   
   new DLibFunDirectTP(lib::strlowcase,string("STRLOWCASE"));
   new DLibFunDirectTP(lib::strupcase,string("STRUPCASE"));
   new DLibFunDirectTP(lib::strlen,string("STRLEN"));
 
   const string strmidKey[]={"REVERSE_OFFSET",KLISTEND};
-  new DLibFunRetNew(lib::strmid,string("STRMID"),3,strmidKey,NULL,true);
-  new DLibFunRetNew(lib::strtrim,string("STRTRIM"),2,NULL,NULL,true);
+  new DLibFunRetNew(lib::strmid, string("STRMID"), 3, strmidKey, nullptr, true);
+  new DLibFunRetNew(lib::strtrim, string("STRTRIM"), 2, nullptr, nullptr, true);
   const string strposKey[]={"REVERSE_OFFSET","REVERSE_SEARCH",KLISTEND};
-  new DLibFunRetNew(lib::strpos,string("STRPOS"),3,strposKey,NULL,true,2);
-  new DLibPro(lib::strput,string("STRPUT"),3,NULL,NULL,2);
+  new DLibFunRetNew(lib::strpos, string("STRPOS"), 3, strposKey, nullptr, true, 2);
+  new DLibPro(lib::strput, string("STRPUT"), 3, nullptr, nullptr, 2);
   
   const string whereKey[]={"COMPLEMENT","NCOMPLEMENT","NULL","L64",KLISTEND};
   new DLibFunRetNewTP(lib::where_fun,string("WHERE"),2,whereKey);  //UsesThreadPOOL 
 
   const string totalKey[]={"CUMULATIVE","DOUBLE","NAN","INTEGER","PRESERVE_TYPE",KLISTEND};
-  new DLibFunRetNewTP(lib::total_fun,string("TOTAL"),2,totalKey,NULL,true);  //UsesThreadPOOL 
+  new DLibFunRetNewTP(lib::total_fun, string("TOTAL"), 2, totalKey, nullptr, true);  //UsesThreadPOOL
 
   const string productKey[]={"CUMULATIVE","NAN","INTEGER","PRESERVE_TYPE",KLISTEND};
-  new DLibFunRetNewTP(lib::product_fun,string("PRODUCT"),2,productKey,NULL,true);  //UsesThreadPOOL 
+  new DLibFunRetNewTP(lib::product_fun, string("PRODUCT"), 2, productKey, nullptr, true);  //UsesThreadPOOL
 
   new DLibFunRetNew(lib::n_params,string("N_PARAMS"),1); // IDL allows one parameter
   new DLibFunRetNew(lib::keyword_set,string("KEYWORD_SET"),1);
 
   const string array_equalKey[]={"NO_TYPECONV","NOT_EQUAL","QUIET",KLISTEND};
-  new DLibFunRetNew(lib::array_equal,string("ARRAY_EQUAL"),2,array_equalKey,NULL,true);
+  new DLibFunRetNew(lib::array_equal, string("ARRAY_EQUAL"), 2, array_equalKey, nullptr, true);
   
   const string minKey[]={"MAX","NAN","SUBSCRIPT_MAX","DIMENSION","ABSOLUTE",KLISTEND};
-  new DLibFunRetNewTP(lib::min_fun,string("MIN"),2,minKey,NULL,true);  //UsesThreadPOOL 
+  new DLibFunRetNewTP(lib::min_fun, string("MIN"), 2, minKey, nullptr, true);  //UsesThreadPOOL
   const string maxKey[]={"MIN","NAN","SUBSCRIPT_MIN","DIMENSION","ABSOLUTE",KLISTEND};
-  new DLibFunRetNewTP(lib::max_fun,string("MAX"),2,maxKey,NULL,true);  //UsesThreadPOOL 
+  new DLibFunRetNewTP(lib::max_fun, string("MAX"), 2, maxKey, nullptr, true);  //UsesThreadPOOL
 
-  // retConstant: structs are tricky: struct resolution depends from !PATH
+  // retConstant: structs are tricky: struct resolution depends on !PATH
   // and this might change during runtime, but if treated as retConstant
   // the struct would be already defined at compile time.
   const string create_structKey[]={"NAME",KLISTEND};
   new DLibFunRetNew(lib::create_struct,string("CREATE_STRUCT"),-1,create_structKey/*,true*/);
 
-  new DLibFunRetNew(lib::rotate,string("ROTATE"),2,NULL,NULL,true);
+  new DLibFunRetNew(lib::rotate, string("ROTATE"), 2, nullptr, nullptr, true);
 
   const string reverseKey[] = {"OVERWRITE", KLISTEND};
-  new DLibFun(lib::reverse, string("REVERSE"), 2, reverseKey, NULL, true);
+  new DLibFun(lib::reverse, string("REVERSE"), 2, reverseKey, nullptr, true);
 
 
 #ifdef USE_PYTHON
@@ -686,7 +684,7 @@ void LibInit()
   "GLYPH_CACHE", //PRINTER,PS,WIN,Z,METAFILE
   //"INDEX_COLOR", (METAFILE, PRINTER)
   "ITALIC", //PS
-  "LANGUAGE_LEVEL" //PS,
+  "LANGUAGE_LEVEL", //PS,
   "DEMI","LIGHT","MEDIUM","NARROW","OBLIQUE", //PS
   //"OPTIMIZE", (PCL)
   "ORDERED", //(PCL,X)
