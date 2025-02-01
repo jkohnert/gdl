@@ -1,5 +1,5 @@
-#ifndef INC_ANTLRException_hpp__
-#define INC_ANTLRException_hpp__
+#ifndef INC_ANTLRException_hpp_
+#define INC_ANTLRException_hpp_
 
 /* ANTLR Translator Generator
  * Project led by Terence Parr at http://www.jGuru.com
@@ -9,27 +9,25 @@
  */
 
 #include <antlr/config.hpp>
-#include <string>
+#include <stdexcept>
 
 #ifdef ANTLR_CXX_SUPPORTS_NAMESPACE
 namespace antlr {
 #endif
 
-class ANTLR_API ANTLRException
+class ANTLR_API ANTLRException : std::runtime_error
 {
 public:
 	/// Create ANTLR base exception without error message
-	ANTLRException() : text("")
+	ANTLRException() : std::runtime_error("")
 	{
 	}
 	/// Create ANTLR base exception with error message
-	ANTLRException(const ANTLR_USE_NAMESPACE(std)string& s)
-	: text(s)
+	explicit ANTLRException(const ANTLR_USE_NAMESPACE(std)string& s)
+	: std::runtime_error(s)
 	{
 	}
-	virtual ~ANTLRException() throw()
-	{
-	}
+	~ANTLRException() noexcept override = default;
 
 	/** Return complete error message with line/column number info (if present)
 	 * @note for your own exceptions override this one. Call getMessage from
@@ -37,7 +35,7 @@ public:
 	 */
 	virtual ANTLR_USE_NAMESPACE(std)string toString() const
 	{
-		return text;
+		return what();
 	}
 
 	/** Return error message without additional info (if present)
@@ -47,13 +45,11 @@ public:
 	 */
 	virtual ANTLR_USE_NAMESPACE(std)string getMessage() const
 	{
-		return text;
+		return what();
 	}
-private:
-	ANTLR_USE_NAMESPACE(std)string text;
 };
 #ifdef ANTLR_CXX_SUPPORTS_NAMESPACE
 }
 #endif
 
-#endif //INC_ANTLRException_hpp__
+#endif //INC_ANTLRException_hpp_

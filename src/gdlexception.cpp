@@ -16,6 +16,7 @@
  ***************************************************************************/
 
 #include "gdlexception.hpp"
+
 #include "dnode.hpp"
 #include "initsysvar.hpp"
 #include "gdljournal.hpp"
@@ -26,35 +27,36 @@
 
 using namespace std;
 
-DInterpreter* GDLException::interpreter = NULL;
+DInterpreter* GDLException::interpreter = nullptr;
 
 string GDLException::Name( BaseGDL* b)
 {
-if(interpreter!=NULL && interpreter->CallStack().size()>0) 
-	return interpreter->Name(b);
+if(interpreter!=nullptr && !DInterpreter::CallStack().empty())
+	return DInterpreter::Name(b);
 return "";
 }
 
-GDLException::GDLException(DLong eC, const string& s, bool pre, bool decorate): 
+GDLException::GDLException(DLong eC, const string& s, bool pre, bool decorate):
   ANTLRException(s),
   errorNode(static_cast<RefDNode>(antlr::nullAST)),
-  errorNodeP( NULL),
+  errorNodeP(nullptr),
   errorCode(eC),
   line( 0), col( 0), prefix( pre),
   arrayexprIndexeeFailed(false),
   ioException( false),
-  targetEnv( NULL)
+  targetEnv(nullptr)
 {
-if(decorate && interpreter!=NULL && interpreter->CallStack().size()>0) 
+if(decorate && interpreter!=nullptr && !DInterpreter::CallStack().empty())
 {
-  EnvBaseT* e = interpreter->CallStack().back();
+  EnvBaseT* e = DInterpreter::CallStack().back();
   errorNodeP = e->CallingNode();
-  msg = e->GetProName();
-  if( msg != "$MAIN$") msg +=  ": "+ s; else msg = s;
+  if (e->GetProName() != "$MAIN$")
+    msg = std::runtime_error(e->GetProName() + ": " + s);
+  else msg = std::runtime_error(s);
 }
 else
 {
-  msg = s;
+  msg = std::runtime_error(s);
 }
   // note: This is for cases, when form a destructor is thrown
   // in these cases, program aborts
@@ -65,22 +67,24 @@ else
 GDLException::GDLException(const string& s, bool pre, bool decorate): 
   ANTLRException(s),
   errorNode(static_cast<RefDNode>(antlr::nullAST)),
-  errorNodeP( NULL),
+  errorNodeP( nullptr),
   errorCode(-1),
   line( 0), col( 0), prefix( pre),
+  arrayexprIndexeeFailed(false),
   ioException( false),
-  targetEnv( NULL)
+  targetEnv( nullptr)
 {
-if(decorate && interpreter!=NULL && interpreter->CallStack().size()>0) 
+if(decorate && interpreter!=nullptr && !DInterpreter::CallStack().empty())
 {
-  EnvBaseT* e = interpreter->CallStack().back();
+  EnvBaseT* e = DInterpreter::CallStack().back();
   errorNodeP = e->CallingNode();
-  msg = e->GetProName();
-  if( msg != "$MAIN$") msg +=  ": "+ s; else msg = s;
+  if (e->GetProName() != "$MAIN$")
+    msg = std::runtime_error(e->GetProName() + ": " + s);
+  else msg = std::runtime_error(s);
 }
 else
 {
-  msg = s;
+  msg = std::runtime_error(s);
 }
   // note: This is for cases, when form a destructor is thrown
   // in these cases, program aborts
@@ -89,136 +93,141 @@ else
 #endif
 }
 
-GDLException::GDLException(const RefDNode eN, const string& s): 
-  ANTLRException(s), 
+GDLException::GDLException(const RefDNode& eN, const string& s):
+  ANTLRException(s),
   errorNode(eN),
-  errorNodeP( NULL),
+  errorNodeP( nullptr),
   errorCode(-1),
   line( 0), col( 0), prefix( true),
   arrayexprIndexeeFailed(false),
   ioException( false),
-  targetEnv( NULL)
+  targetEnv( nullptr)
 {
-if(interpreter!=NULL && interpreter->CallStack().size()>0) 
+if(interpreter!=nullptr && !DInterpreter::CallStack().empty())
 {
-  EnvBaseT* e = interpreter->CallStack().back();
+  EnvBaseT* e = DInterpreter::CallStack().back();
   errorNodeP = e->CallingNode();
-  msg = e->GetProName();
-  if( msg != "$MAIN$") msg +=  ": "+ s; else msg = s;
+  if (e->GetProName() != "$MAIN$")
+    msg = std::runtime_error(e->GetProName() + ": " + s);
+  else msg = std::runtime_error(s);
 }
 else
 {
-  msg = s;
+  msg = std::runtime_error(s);
 }
 #ifdef GDL_DEBUG
    cerr << s << endl;
 #endif
 }
-GDLException::GDLException(DLong eC, const RefDNode eN, const string& s): 
-  ANTLRException(s), 
+GDLException::GDLException(DLong eC, const RefDNode& eN, const string& s):
+  ANTLRException(s),
   errorNode(eN),
-  errorNodeP( NULL),
+  errorNodeP(nullptr),
   errorCode(eC),
   line( 0), col( 0), prefix( true),
   arrayexprIndexeeFailed(false),
   ioException( false),
-  targetEnv( NULL)
+  targetEnv(nullptr)
 {
-if(interpreter!=NULL && interpreter->CallStack().size()>0) 
+if(interpreter!=nullptr && !DInterpreter::CallStack().empty())
 {
-  EnvBaseT* e = interpreter->CallStack().back();
+  EnvBaseT* e = DInterpreter::CallStack().back();
   errorNodeP = e->CallingNode();
-  msg = e->GetProName();
-  if( msg != "$MAIN$") msg +=  ": "+ s; else msg = s;
+  if (e->GetProName() != "$MAIN$")
+    msg = std::runtime_error(e->GetProName() + ": " + s);
+  else msg = std::runtime_error(s);
 }
 else
 {
-  msg = s;
+  msg = std::runtime_error(s);
 }
 #ifdef GDL_DEBUG
    cerr << s << endl;
 #endif
 }
 
-GDLException::GDLException(const ProgNodeP eN, const string& s, bool decorate, bool overWriteNode): 
-  ANTLRException(s), 
+GDLException::GDLException(ProgNodeP eN, const string& s, bool decorate, bool overWriteNode):
+  ANTLRException(s),
   errorNode(static_cast<RefDNode>(antlr::nullAST)),
   errorNodeP( eN),
   errorCode(-1),
   line( 0), col( 0), prefix( true),
   arrayexprIndexeeFailed(false),
   ioException( false),
-  targetEnv( NULL)
+  targetEnv( nullptr)
 {
-if( overWriteNode && interpreter!=NULL && interpreter->CallStack().size()>0) 
+if( overWriteNode && interpreter!=nullptr && !DInterpreter::CallStack().empty())
 {
-  EnvBaseT* e = interpreter->CallStack().back();
+  EnvBaseT* e = DInterpreter::CallStack().back();
   errorNodeP = e->CallingNode();
 }
-if( decorate && interpreter!=NULL && interpreter->CallStack().size()>0)
+if( decorate && interpreter!=nullptr && !DInterpreter::CallStack().empty())
 {
-  EnvBaseT* e = interpreter->CallStack().back();
-  msg = e->GetProName();
-  if( msg != "$MAIN$") msg +=  ": "+ s; else msg = s;
+  EnvBaseT* e = DInterpreter::CallStack().back();
+  if (e->GetProName() != "$MAIN$")
+    msg = std::runtime_error(e->GetProName() + ": " + s);
+  else msg = std::runtime_error(s);
 }
 else
 {
-  msg = s;
+  msg = std::runtime_error(s);
 }
 #ifdef GDL_DEBUG
    cerr << s << endl;
 #endif
 }
-GDLException::GDLException(DLong eC, const ProgNodeP eN, const string& s, bool decorate, bool overWriteNode): 
-  ANTLRException(s), 
+GDLException::GDLException(DLong eC, ProgNodeP eN, const string& s, bool decorate, bool overWriteNode):
+  ANTLRException(s),
   errorNode(static_cast<RefDNode>(antlr::nullAST)),
   errorNodeP( eN),
   errorCode(eC),
   line( 0), col( 0), prefix( true),
   arrayexprIndexeeFailed(false),
   ioException( false),
-  targetEnv( NULL)
+  targetEnv( nullptr)
 {
-  if( overWriteNode && interpreter!=NULL && interpreter->CallStack().size()>0) 
+  if( overWriteNode && interpreter!=nullptr && !DInterpreter::CallStack().empty())
   {
-    EnvBaseT* e = interpreter->CallStack().back();
+    EnvBaseT* e = DInterpreter::CallStack().back();
     errorNodeP = e->CallingNode();
   }
-  if( decorate && interpreter!=NULL && interpreter->CallStack().size()>0)
+  if( decorate && interpreter!=nullptr && !DInterpreter::CallStack().empty())
   {
-    EnvBaseT* e = interpreter->CallStack().back();
-    msg = e->GetProName();
-    if( msg != "$MAIN$") msg +=  ": "+ s; else msg = s;
+    EnvBaseT* e = DInterpreter::CallStack().back();
+    if (e->GetProName() != "$MAIN$")
+      msg = std::runtime_error(e->GetProName() + ": " + s);
+    else msg = std::runtime_error(s);
   }
   else
   {
-    msg = s;
+    msg = std::runtime_error(s);
   }
 #ifdef GDL_DEBUG
    cerr << s << endl;
 #endif
 }
-GDLException::GDLException(SizeT l, SizeT c, const string& s, const string& file): 
+GDLException::GDLException(SizeT l, SizeT c, const string& s, const string& file):
   ANTLRException(s),
   errorNode(static_cast<RefDNode>(antlr::nullAST)),
-  errorNodeP( NULL),
+  errorNodeP( nullptr),
   errorCode(-1),
-  line( l), col( c), filename(file),
+  line( l), col( c), filename(std::runtime_error(file)),
   prefix( true),
   arrayexprIndexeeFailed(false),
   ioException( false),
-  targetEnv( NULL)
+  targetEnv( nullptr)
 {
-  if(interpreter!=NULL && interpreter->CallStack().size()>0) 
+  if(interpreter!=nullptr && !DInterpreter::CallStack().empty())
   {
-    EnvBaseT* e = interpreter->CallStack().back();
+    EnvBaseT* e = DInterpreter::CallStack().back();
     errorNodeP = e->CallingNode();
-    msg = e->GetProName();
-    if( msg != "$MAIN$") msg +=  ": "+ s; else msg = s;
+    if (e->GetProName() != "$MAIN$")
+      msg = std::runtime_error(e->GetProName() + ": " + s);
+    else msg = std::runtime_error(s);
   }
   else
   {
-    msg = s;
+    msg = std::runtime_error(s);
   }
 #ifdef GDL_DEBUG
    cerr << s << endl;
@@ -228,23 +237,24 @@ GDLException::GDLException(SizeT l, SizeT c, const string& s, const string& file
 GDLException::GDLException(SizeT l, SizeT c, const string& s): 
   ANTLRException(s),
   errorNode(static_cast<RefDNode>(antlr::nullAST)),
-  errorNodeP( NULL),
+  errorNodeP( nullptr),
   errorCode(-1),
   line( l), col( c), prefix( true),
   arrayexprIndexeeFailed(false),
   ioException( false),
-  targetEnv( NULL)
+  targetEnv( nullptr)
 {
-  if(interpreter!=NULL && interpreter->CallStack().size()>0) 
+  if(interpreter!=nullptr && !DInterpreter::CallStack().empty())
   {
-    EnvBaseT* e = interpreter->CallStack().back();
+    EnvBaseT* e = DInterpreter::CallStack().back();
     errorNodeP = e->CallingNode();
-    msg = e->GetProName();
-    if( msg != "$MAIN$") msg +=  ": "+ s; else msg = s;
+    if (e->GetProName() != "$MAIN$")
+      msg = std::runtime_error(e->GetProName() + ": " + s);
+    else msg = std::runtime_error(s);
   }
   else
   {
-    msg = s;
+    msg = std::runtime_error(s);
   }
 #ifdef GDL_DEBUG
    cerr << s << endl;
@@ -253,22 +263,24 @@ GDLException::GDLException(SizeT l, SizeT c, const string& s):
 GDLException::GDLException(DLong eC, SizeT l, SizeT c, const string& s): 
   ANTLRException(s),
   errorNode(static_cast<RefDNode>(antlr::nullAST)),
-  errorNodeP( NULL),
+  errorNodeP( nullptr),
   errorCode(eC),
   line( l), col( c), prefix( true),
   arrayexprIndexeeFailed(false),
-  targetEnv( NULL)
+  ioException(false),
+  targetEnv( nullptr)
 {
-  if(interpreter!=NULL && interpreter->CallStack().size()>0) 
+  if(interpreter!=nullptr && !DInterpreter::CallStack().empty())
   {
-    EnvBaseT* e = interpreter->CallStack().back();
+    EnvBaseT* e = DInterpreter::CallStack().back();
     errorNodeP = e->CallingNode();
-    msg = e->GetProName();
-    if( msg != "$MAIN$") msg +=  ": "+ s; else msg = s;
+    if (e->GetProName() != "$MAIN$")
+      msg = std::runtime_error(e->GetProName() + ": " + s);
+    else msg = std::runtime_error(s);
   }
   else
   {
-    msg = s;
+    msg = std::runtime_error(s);
   }
   if (!iAmMaster) gdl_ipc_ClientSendReturn(3,s);
 #ifdef GDL_DEBUG
@@ -302,21 +314,21 @@ void WarnAboutObsoleteRoutine(const string& name)
   DStructGDL* warnStruct = SysVar::Warn();
   // this static is ok as it will evaluate always to the same value
   static unsigned obs_routinesTag = warnStruct->Desc()->TagIndex( "OBS_ROUTINES");
-  if (((static_cast<DByteGDL*>( warnStruct->GetTag(obs_routinesTag, 0)))[0]).LogTrue())
+  if (((dynamic_cast<DByteGDL*>( warnStruct->GetTag(obs_routinesTag, 0)))[0]).LogTrue())
     Message("Routine compiled from an obsolete library: " + name);
   // TODO: journal / !QUIET??
 }
 
-void WarnAboutObsoleteRoutine(const RefDNode eN, const string& name)
+void WarnAboutObsoleteRoutine(const RefDNode& eN, const string& name)
 {
 // TODO: journal?
   // no static here due to .RESET_SESSION
   DStructGDL* warnStruct = SysVar::Warn();
   // this static is ok as it will evaluate always to the same value
   static unsigned obs_routinesTag = warnStruct->Desc()->TagIndex( "OBS_ROUTINES");
-  if (((static_cast<DByteGDL*>( warnStruct->GetTag(obs_routinesTag, 0)))[0]).LogTrue())
+  if (((dynamic_cast<DByteGDL*>( warnStruct->GetTag(obs_routinesTag, 0)))[0]).LogTrue())
   {
-    GDLException* e = new GDLException(eN, 
+    auto e = new GDLException(eN,
       "Routine compiled from an obsolete library: " + name
     );
     Guard<GDLException> eGuard(e);

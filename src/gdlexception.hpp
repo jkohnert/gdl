@@ -33,14 +33,14 @@ class GDLException: public antlr::ANTLRException
 {
   static DInterpreter* interpreter;
 
-  std::string msg;
+  std::runtime_error msg = std::runtime_error("");
 
   RefDNode  errorNode;
   ProgNodeP errorNodeP;
   DLong     errorCode;
   SizeT line;
   SizeT col;
-  std::string filename; //the filename (or "" for interactive $MAIN$) where the problem arised
+  std::runtime_error filename = std::runtime_error(""); //the filename (or "" for interactive $MAIN$) where the problem arose
   bool prefix;
   
   bool arrayexprIndexeeFailed;
@@ -62,52 +62,55 @@ public:
   bool GetArrayexprIndexeeFailed() const { return arrayexprIndexeeFailed;}
   void SetArrayexprIndexeeFailed( bool b) { arrayexprIndexeeFailed = b;}
   
-  GDLException(): ANTLRException(), 
+  GDLException(): ANTLRException(),
     errorNode(static_cast<RefDNode>(antlr::nullAST)),
-		  errorNodeP( NULL),
+		  errorNodeP( nullptr),
 		  errorCode(-1),
 		  line( 0), col( 0), prefix( true),
 		  arrayexprIndexeeFailed(false),
 		  ioException( false),
-		  targetEnv( NULL)
+		  targetEnv( nullptr)
   {}
-  GDLException( DLong eC): ANTLRException(), 
+  explicit GDLException( DLong eC): ANTLRException(),
     errorNode(static_cast<RefDNode>(antlr::nullAST)),
-		  errorNodeP( NULL),
+		  errorNodeP( nullptr),
 		  errorCode(eC),
 		  line( 0), col( 0), prefix( true),
 		  arrayexprIndexeeFailed(false),
 		  ioException( false),
-		  targetEnv( NULL)
+		  targetEnv( nullptr)
   {}
-  GDLException(const std::string& s, bool pre = true, bool decorate=true);
-  GDLException(const RefDNode eN, const std::string& s);
-  GDLException(const ProgNodeP eN, const std::string& s, bool decorate=true, bool overWriteNode=true);
-  GDLException(SizeT l, SizeT c, const std::string& s, const std::string &file);
+  explicit GDLException(const std::string& s, bool pre = true, bool decorate=true);
+  GDLException(const RefDNode& eN, const std::string& s);
+  GDLException(ProgNodeP eN, const std::string& s, bool decorate=true, bool overWriteNode=true);
+  GDLException(SizeT l, SizeT c, const std::string& s, const std::string& file);
   GDLException(SizeT l, SizeT c, const std::string& s);
 
   GDLException(DLong eC, const std::string& s, bool pre = true, bool decorate=true);
-  GDLException(DLong eC, const RefDNode eN, const std::string& s);
-  GDLException(DLong eC, const ProgNodeP eN, const std::string& s, bool decorate=true, bool overWriteNode=true);
+  GDLException(DLong eC, const RefDNode& eN, const std::string& s);
+  GDLException(DLong eC, ProgNodeP eN, const std::string& s, bool decorate=true, bool overWriteNode=true);
   GDLException(DLong eC, SizeT l, SizeT c, const std::string& s);
 
-  ~GDLException() throw() {}
+  // TODO it should work without this definition, too, but doesn't because of errorNode
+  GDLException(GDLException const &other) noexcept = default;
+
+  ~GDLException() noexcept override = default;
 
   DLong ErrorCode() const { return errorCode;}
   
-  std::string toString() const
+  std::string toString() const override
   {
-	  return msg;
+	  return msg.what();
   }
   std::string getFilename() const
   {
-	  return filename;
+	  return filename.what();
   }
   SizeT getLine() const 
   { 
     if( line != 0) 
       return line;
-    if( errorNodeP != NULL)
+    if( errorNodeP != nullptr)
       return errorNodeP->getLine();
     if( errorNode != static_cast<RefDNode>(antlr::nullAST))
       return errorNode->getLine();
@@ -145,19 +148,19 @@ public:
 class GDLIOException: public GDLException
 {
 public:
-  GDLIOException(): 
+  GDLIOException():
     GDLException()
   { ioException = true;}
 
-  GDLIOException(const std::string& s, bool pre = true):
+  explicit GDLIOException(const std::string& s, bool pre = true):
     GDLException( s, pre)
   { ioException = true;}
     
-  GDLIOException(const ProgNodeP eN, const std::string& s):
+  GDLIOException(ProgNodeP eN, const std::string& s):
     GDLException( eN, s)
   { ioException = true;}
 
-  GDLIOException(DLong eC): 
+  explicit GDLIOException(DLong eC):
     GDLException(eC)
   { ioException = true;}
 
@@ -165,7 +168,7 @@ public:
     GDLException( eC, s, pre)
   { ioException = true;}
     
-  GDLIOException(DLong eC,const ProgNodeP eN, const std::string& s):
+  GDLIOException(DLong eC,ProgNodeP eN, const std::string& s):
     GDLException( eC, eN, s)
   { ioException = true;}
 };
@@ -176,10 +179,8 @@ void Warning(const std::string& s);
 // messages honor !QUIET
 void Message(const std::string& s);
 
-void ThrowGDLException( const std::string& str);
-
 void WarnAboutObsoleteRoutine(const std::string& name);
-void WarnAboutObsoleteRoutine(const RefDNode eN, const std::string& name);
+void WarnAboutObsoleteRoutine(const RefDNode& eN, const std::string& name);
 
 #endif
 
