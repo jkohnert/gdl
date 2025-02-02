@@ -29,158 +29,137 @@
 
 class EnvUDT;
 
-class GDLException: public antlr::ANTLRException
-{
-  static DInterpreter* interpreter;
+class GDLException : public antlr::ANTLRException {
+  static DInterpreter *interpreter;
 
-  std::runtime_error msg = std::runtime_error("");
+  const RefDNode errorNode;
+  ProgNodeP errorNodeP = nullptr;
+  const DLong errorCode;
+  SizeT line = 0;
+  const SizeT col;
+  // Note: Windows allows longer filenames...
+  char filename[256] = ""; //the filename (or "" for interactive $MAIN$) where the problem arose
+  const bool prefix;
 
-  RefDNode  errorNode;
-  ProgNodeP errorNodeP;
-  DLong     errorCode;
-  SizeT line;
-  SizeT col;
-  std::runtime_error filename = std::runtime_error(""); //the filename (or "" for interactive $MAIN$) where the problem arose
-  bool prefix;
-  
-  bool arrayexprIndexeeFailed;
-  
+  bool arrayExprIndexesFailed = false;
+
 protected:
   bool ioException;
- 
-private:  
-  EnvUDT* targetEnv; // where to stop (depending on ON_ERROR)
+
+private:
+  EnvUDT *targetEnv = nullptr; // where to stop (depending on ON_ERROR)
 
 public:
-  static DInterpreter* Interpreter() { return interpreter;}
-  static void SetInterpreter( DInterpreter* i) { interpreter = i;}
+  static DInterpreter *Interpreter() { return interpreter; }
+  static void SetInterpreter(DInterpreter *i) { interpreter = i; }
 
-  static std::string Name( BaseGDL* b);
+  static std::string Name(BaseGDL *b);
 
-  void SetErrorNodeP( ProgNodeP p) { errorNodeP = p;}
+  void SetErrorNodeP(ProgNodeP p) { errorNodeP = p; }
 
-  bool GetArrayexprIndexeeFailed() const { return arrayexprIndexeeFailed;}
-  void SetArrayexprIndexeeFailed( bool b) { arrayexprIndexeeFailed = b;}
-  
-  GDLException(): ANTLRException(),
-    errorNode(static_cast<RefDNode>(antlr::nullAST)),
-		  errorNodeP( nullptr),
-		  errorCode(-1),
-		  line( 0), col( 0), prefix( true),
-		  arrayexprIndexeeFailed(false),
-		  ioException( false),
-		  targetEnv( nullptr)
-  {}
-  explicit GDLException( DLong eC): ANTLRException(),
-    errorNode(static_cast<RefDNode>(antlr::nullAST)),
-		  errorNodeP( nullptr),
-		  errorCode(eC),
-		  line( 0), col( 0), prefix( true),
-		  arrayexprIndexeeFailed(false),
-		  ioException( false),
-		  targetEnv( nullptr)
-  {}
-  explicit GDLException(const std::string& s, bool pre = true, bool decorate=true);
-  GDLException(const RefDNode& eN, const std::string& s);
-  GDLException(ProgNodeP eN, const std::string& s, bool decorate=true, bool overWriteNode=true);
-  GDLException(SizeT l, SizeT c, const std::string& s, const std::string& file);
-  GDLException(SizeT l, SizeT c, const std::string& s);
+  bool GetArrayexprIndexeeFailed() const { return arrayExprIndexesFailed; }
+  void SetArrayexprIndexeeFailed(bool b) { arrayExprIndexesFailed = b; }
 
-  GDLException(DLong eC, const std::string& s, bool pre = true, bool decorate=true);
-  GDLException(DLong eC, const RefDNode& eN, const std::string& s);
-  GDLException(DLong eC, ProgNodeP eN, const std::string& s, bool decorate=true, bool overWriteNode=true);
-  GDLException(DLong eC, SizeT l, SizeT c, const std::string& s);
+  GDLException() :
+      ANTLRException(),
+      errorNode(static_cast<RefDNode>(antlr::nullAST)),
+      errorNodeP(nullptr),
+      errorCode(-1),
+      col(0),
+      prefix(true),
+      ioException(false) {}
+  explicit GDLException(DLong eC) :
+      ANTLRException(),
+      errorNode(static_cast<RefDNode>(antlr::nullAST)),
+      errorNodeP(nullptr),
+      errorCode(eC),
+      col(0),
+      prefix(true),
+      ioException(false) {}
+  explicit GDLException(const std::string &s, bool pre = true, bool decorate = true);
+  GDLException(const RefDNode &eN, const std::string &s);
+  GDLException(ProgNodeP eN, const std::string &s, bool decorate = true, bool overWriteNode = true);
+  GDLException(SizeT l, SizeT c, const std::string &s, const std::string &file);
+  GDLException(SizeT l, SizeT c, const std::string &s);
 
-  // TODO it should work without this definition, too, but doesn't because of errorNode
-  GDLException(GDLException const &other) noexcept = default;
+  GDLException(DLong eC, const std::string &s, bool pre = true, bool decorate = true);
+  GDLException(DLong eC, const RefDNode &eN, const std::string &s);
+  GDLException(DLong eC, ProgNodeP eN, const std::string &s, bool decorate = true, bool overWriteNode = true);
+  GDLException(DLong eC, SizeT l, SizeT c, const std::string &s);
 
   ~GDLException() noexcept override = default;
 
-  DLong ErrorCode() const { return errorCode;}
-  
-  std::string toString() const override
-  {
-	  return msg.what();
+  DLong ErrorCode() const { return errorCode; }
+
+  std::string toString() const override {
+    return msg.what();
   }
-  std::string getFilename() const
-  {
-	  return filename.what();
+  std::string getFilename() const {
+    return filename;
   }
-  SizeT getLine() const 
-  { 
-    if( line != 0) 
+  SizeT getLine() const {
+    if (line != 0)
       return line;
-    if( errorNodeP != nullptr)
+    if (errorNodeP != nullptr)
       return errorNodeP->getLine();
-    if( errorNode != static_cast<RefDNode>(antlr::nullAST))
+    if (errorNode != static_cast<RefDNode>(antlr::nullAST))
       return errorNode->getLine();
     return 0;
   }
 
-  void SetLine( SizeT l) { line = l;}
+  void SetLine(SizeT l) { line = l; }
 
-  SizeT getColumn() const 
-  { 
+  SizeT getColumn() const {
     //    if( errorNode != static_cast<RefDNode>(antlr::nullAST))
     //      return errorNode->getColumn();
     return col;
   }
 
-  bool Prefix() const 
-  { 
+  bool Prefix() const {
     return prefix;
   }
 
-  void SetTargetEnv( EnvUDT* tEnv)
-  {
+  void SetTargetEnv(EnvUDT *tEnv) {
     targetEnv = tEnv;
   }
 
-  EnvUDT* GetTargetEnv()
-  {
+  EnvUDT *GetTargetEnv() {
     return targetEnv;
   }
 
-  bool IsIOException() const { return ioException;}
+  bool IsIOException() const { return ioException; }
 };
 
 // for ON_IOERROR
-class GDLIOException: public GDLException
-{
+class GDLIOException : public GDLException {
 public:
-  GDLIOException():
-    GDLException()
-  { ioException = true;}
+  GDLIOException() :
+      GDLException() { ioException = true; }
 
-  explicit GDLIOException(const std::string& s, bool pre = true):
-    GDLException( s, pre)
-  { ioException = true;}
-    
-  GDLIOException(ProgNodeP eN, const std::string& s):
-    GDLException( eN, s)
-  { ioException = true;}
+  explicit GDLIOException(const std::string &s, bool pre = true) :
+      GDLException(s, pre) { ioException = true; }
 
-  explicit GDLIOException(DLong eC):
-    GDLException(eC)
-  { ioException = true;}
+  GDLIOException(ProgNodeP eN, const std::string &s) :
+      GDLException(eN, s) { ioException = true; }
 
-  GDLIOException(DLong eC,const std::string& s, bool pre = true):
-    GDLException( eC, s, pre)
-  { ioException = true;}
-    
-  GDLIOException(DLong eC,ProgNodeP eN, const std::string& s):
-    GDLException( eC, eN, s)
-  { ioException = true;}
+  explicit GDLIOException(DLong eC) :
+      GDLException(eC) { ioException = true; }
+
+  GDLIOException(DLong eC, const std::string &s, bool pre = true) :
+      GDLException(eC, s, pre) { ioException = true; }
+
+  GDLIOException(DLong eC, ProgNodeP eN, const std::string &s) :
+      GDLException(eC, eN, s) { ioException = true; }
 };
 
 // warnings ignore !QUIET
-void Warning(const std::string& s);
+void Warning(const std::string &s);
 
 // messages honor !QUIET
-void Message(const std::string& s);
+void Message(const std::string &s);
 
-void WarnAboutObsoleteRoutine(const std::string& name);
-void WarnAboutObsoleteRoutine(const RefDNode& eN, const std::string& name);
+void WarnAboutObsoleteRoutine(const std::string &name);
+void WarnAboutObsoleteRoutine(const RefDNode &eN, const std::string &name);
 
 #endif
 
