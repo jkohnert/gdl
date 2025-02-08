@@ -1,18 +1,18 @@
- TRACE_ROUTINE(__FUNCTION__, __FILE__, __LINE__)
-  Data_* right = static_cast<Data_*> (r);
+TRACE_ROUTINE(__FUNCTION__, __FILE__, __LINE__)
+  auto right = dynamic_cast<Data_*> (r);
 
-  ULong nEl = N_Elements();
+  const auto nEl = static_cast<OMPInt>(N_Elements());
   assert(nEl);
   if (nEl == 1) {
-	if ((*this)[0] != zero) (*this)[0] = (*right)[0];
-	return this;
+    if ((*this)[0] != zero) (*this)[0] = (*right)[0];
+    return this;
   }
 
   if ((GDL_NTHREADS = parallelize(nEl)) == 1) {
-	for (OMPInt i = 0; i < nEl; ++i) if ((*this)[i] != zero) (*this)[i] = (*right)[i];
+    for (OMPInt i = 0; i < nEl; ++i) if ((*this)[i] != zero) (*this)[i] = (*right)[i];
   } else {
-	TRACEOMP(__FILE__, __LINE__)
-#pragma omp parallel for num_threads(GDL_NTHREADS)
-	  for (OMPInt i = 0; i < nEl; ++i) if ((*this)[i] != zero) (*this)[i] = (*right)[i];
+    TRACEOMP(__FILE__, __LINE__)
+#pragma omp parallel for num_threads(GDL_NTHREADS) default(none) shared(nEl, right)
+    for (OMPInt i = 0; i < nEl; ++i) if ((*this)[i] != zero) (*this)[i] = (*right)[i];
   }
   return this;
