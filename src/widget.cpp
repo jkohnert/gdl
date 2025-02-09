@@ -1908,7 +1908,7 @@ BaseGDL* widget_info( EnvT* e ) {
   if (debug) {
       DLongGDL* wid = static_cast<DLongGDL*>( GDLWidget::GetWidgetsList( ) );
       Guard<BaseGDL> guard_wid(wid);
-      DStringGDL* res = new DStringGDL(wid->N_Elements());
+      DStringGDL *res = new DStringGDL(dimension(wid->N_Elements()));
       for ( SizeT i = 0; i < wid->N_Elements(); i++ ) {
         GDLWidget *widget = GDLWidget::GetWidget( (*wid)[i] );
         //protect against internal error where wid is not up-to-date
