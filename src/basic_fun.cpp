@@ -66,9 +66,7 @@ extern "C" char **environ;
 #include "base64.hpp"
 #include "gdlfpexceptions.hpp"
 
-#ifdef HAVE_LOCALE_H
-#include <locale.h>
-#endif
+#include <clocale>
 
 /* max regexp error message length */
 #define MAX_REGEXPERR_LENGTH 80
@@ -8600,19 +8598,20 @@ namespace lib {
   }
 
   BaseGDL* locale_get(EnvT* e) {
-#ifdef HAVE_LOCALE_H
+    try {
+      // make GDL inherit the calling process locale
+      setlocale(LC_ALL, "");
+      // note doen the inherited locale
+      auto *locale = new DStringGDL(setlocale(LC_CTYPE, nullptr));
+      // return to the C locale
+      setlocale(LC_ALL, "C");
 
-    // make GDL inherit the calling process locale
-    setlocale(LC_ALL, "");
-    // note doen the inherited locale
-    DStringGDL *locale = new DStringGDL(setlocale(LC_CTYPE, NULL));
-    // return to the C locale
-    setlocale(LC_ALL, "C");
-
-    return locale;
-#else
-    e->Throw("OS does not provide locale information");
-#endif
+      return locale;
+    }
+    catch (const std::exception& ex) {
+      e->Throw("Unexpected error in locale_get(): " + string(ex.what()));
+      return nullptr;
+    }
   }
 
   // SA: relies on the contents of the lib::command_line_args vector

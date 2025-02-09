@@ -2288,7 +2288,7 @@ namespace lib {
 
     static int degreesIx=e->KeywordIx("DEGREES");
     
-    BaseGDL* rt = p0->New(dimension(2, BaseGDL::NOZERO));
+    BaseGDL* rt = p0->New(2, BaseGDL::NOZERO);
     if (type == GDL_FLOAT) {
       ll_arc_distance_helper(
         (*static_cast<DFloatGDL*> (p1))[0],

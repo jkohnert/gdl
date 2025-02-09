@@ -1,5 +1,5 @@
-#ifndef INC_BaseAST_hpp__
-#define INC_BaseAST_hpp__
+#ifndef INC_BaseAST_hpp_
+#define INC_BaseAST_hpp_
 
 /* ANTLR Translator Generator
  * Project led by Terence Parr at http://www.jGuru.com
@@ -20,145 +20,137 @@ typedef ASTRefCount<BaseAST> RefBaseAST;
 
 class ANTLR_API BaseAST : public AST {
 public:
-	BaseAST();
-	BaseAST(const BaseAST& other);
+  BaseAST();
+  BaseAST(const BaseAST &other);
 
-	virtual ~BaseAST();
+  ~BaseAST() override;
 
-	/// Return the class name
-	virtual const char* typeName( void ) const;
+  /// Return the class name
+  const char *typeName() const override;
 
-	/// Clone this AST node.
-	virtual RefAST clone( void ) const;
+  /// Clone this AST node.
+  RefAST clone() const override;
 
-   /// Is node t equal to this in terms of token type and text?
-	virtual bool equals(RefAST t) const;
+  /// Is node t equal to this in terms of token type and text?
+  bool equals(RefAST t) const override;
 
-   /** Is t an exact structural and equals() match of this tree. The
-	 * 'this' reference is considered the start of a sibling list.
-	 */
-	virtual bool equalsList(RefAST t) const;
-
-   /** Is 't' a subtree of this list? The siblings of the root are NOT ignored.
+  /** Is t an exact structural and equals() match of this tree. The
+    * 'this' reference is considered the start of a sibling list.
     */
-	virtual bool equalsListPartial(RefAST t) const;
+  bool equalsList(RefAST t) const override;
 
-	/** Is tree rooted at 'this' equal to 't'?  The siblings of 'this' are
-	 * ignored.
-	 */
-	virtual bool equalsTree(RefAST t) const;
+  /** Is 't' a subtree of this list? The siblings of the root are NOT ignored.
+   */
+  bool equalsListPartial(RefAST t) const override;
 
-	/** Is 't' a subtree of the tree rooted at 'this'? The siblings of
-	 * 'this' are ignored.
-	 */
-	virtual bool equalsTreePartial(RefAST t) const;
+  /** Is tree rooted at 'this' equal to 't'?  The siblings of 'this' are
+   * ignored.
+   */
+  bool equalsTree(RefAST t) const override;
 
-	/** Walk the tree looking for all exact subtree matches.  Return
-	 *  an ASTEnumerator that lets the caller walk the list
-	 *  of subtree roots found herein.
-	 */
-	virtual ANTLR_USE_NAMESPACE(std)vector<RefAST> findAll(RefAST t);
+  /** Is 't' a subtree of the tree rooted at 'this'? The siblings of
+   * 'this' are ignored.
+   */
+  bool equalsTreePartial(RefAST t) const override;
 
-   /** Walk the tree looking for all subtrees.  Return
-    *  an ASTEnumerator that lets the caller walk the list
-    *  of subtree roots found herein.
-    */
-	virtual ANTLR_USE_NAMESPACE(std)vector<RefAST> findAllPartial(RefAST t);
+  /** Walk the tree looking for all exact subtree matches.  Return
+   *  an ASTEnumerator that lets the caller walk the list
+   *  of subtree roots found herein.
+   */
+  ANTLR_USE_NAMESPACE(std)vector<RefAST> findAll(RefAST t) override;
 
-   /// Add a node to the end of the child list for this node
-	virtual void addChild(RefAST c);
-	/** Get the number of child nodes of this node (shallow e.g. not of the
-	 * whole tree it spans).
-	 */
-	virtual size_t getNumberOfChildren() const;
+  /** Walk the tree looking for all subtrees.  Return
+   *  an ASTEnumerator that lets the caller walk the list
+   *  of subtree roots found herein.
+   */
+  ANTLR_USE_NAMESPACE(std)vector<RefAST> findAllPartial(RefAST t) override;
 
-	/// Get the first child of this node; null if no children
-	virtual RefAST getFirstChild() const
-	{
-		return RefAST(down);
-	}
-	/// Get  the next sibling in line after this one
-	virtual RefAST getNextSibling() const
-	{
-		return RefAST(right);
-	}
+  /// Add a node to the end of the child list for this node
+  void addChild(RefAST c) override;
+  /** Get the number of child nodes of this node (shallow e.g. not of the
+   * whole tree it spans).
+   */
+  size_t getNumberOfChildren() const override;
 
-	/// Get the token text for this node
-	virtual ANTLR_USE_NAMESPACE(std)string getText() const
-	{
-		return "";
-	}
-	/// Get the token type for this node
-	virtual int getType() const
-	{
-		return 0;
-	}
+  /// Get the first child of this node; null if no children
+  RefAST getFirstChild() const override {
+    return {down};
+  }
+  /// Get  the next sibling in line after this one
+  RefAST getNextSibling() const override {
+    return {right};
+  }
 
-	/// Remove all children
-	virtual void removeChildren()
-	{
-		down = static_cast<BaseAST*>(static_cast<AST*>(nullAST));
-	}
+  /// Get the token text for this node
+  ANTLR_USE_NAMESPACE(std)string getText() const override {
+    return "";
+  }
+  /// Get the token type for this node
+  int getType() const override {
+    return 0;
+  }
 
-	/// Set the first child of a node.
-	virtual void setFirstChild(RefAST c)
-	{
-		down = static_cast<BaseAST*>(static_cast<AST*>(c));
-	}
+  /// Remove all children
+  virtual void removeChildren() {
+    down = dynamic_cast<BaseAST *>(static_cast<AST *>(nullAST));
+  }
 
-	/// Set the next sibling after this one.
-	void setNextSibling(RefAST n)
-	{
-		right = static_cast<BaseAST*>(static_cast<AST*>(n));
-	}
+  /// Set the first child of a node.
+  void setFirstChild(RefAST c) override {
+    down = dynamic_cast<BaseAST *>(static_cast<AST *>(c));
+  }
 
-	/// Set the token text for this node
-	virtual void setText(const ANTLR_USE_NAMESPACE(std)string& txt);
+  /// Set the next sibling after this one.
+  void setNextSibling(RefAST n) override {
+    right = dynamic_cast<BaseAST *>(static_cast<AST *>(n));
+  }
 
-	/// Set the token type for this node
-	virtual void setType(int type);
+  /// Set the token text for this node
+  void setText(const ANTLR_USE_NAMESPACE(std)string &txt) override;
+
+  /// Set the token type for this node
+  void setType(int type) override;
 
 #ifdef ANTLR_SUPPORT_XML
-	/** print attributes of this node to 'out'. Override to customize XML
-	 * output.
-	 * @param out the stream to write the AST attributes to.
-	 */
-	virtual bool attributesToStream( ANTLR_USE_NAMESPACE(std)ostream& out ) const;
-	/** Write this subtree to a stream. Overload this one to customize the XML
-	 * output for AST derived AST-types
-	 * @param output stream
-	 */
-	virtual void toStream( ANTLR_USE_NAMESPACE(std)ostream &out ) const;
+  /** print attributes of this node to 'out'. Override to customize XML
+   * output.
+   * @param out the stream to write the AST attributes to.
+   */
+  virtual bool attributesToStream( ANTLR_USE_NAMESPACE(std)ostream& out ) const;
+  /** Write this subtree to a stream. Overload this one to customize the XML
+   * output for AST derived AST-types
+   * @param output stream
+   */
+  virtual void toStream( ANTLR_USE_NAMESPACE(std)ostream &out ) const;
 #endif
 
-	/// Return string representation for the AST
-	virtual ANTLR_USE_NAMESPACE(std)string toString() const;
+  /// Return string representation for the AST
+  ANTLR_USE_NAMESPACE(std)string toString() const override;
 
-	/// Print out a child sibling tree in LISP notation
-	virtual ANTLR_USE_NAMESPACE(std)string toStringList() const;
-	virtual ANTLR_USE_NAMESPACE(std)string toStringTree() const;
+  /// Print out a child sibling tree in LISP notation
+  ANTLR_USE_NAMESPACE(std)string toStringList() const override;
+  ANTLR_USE_NAMESPACE(std)string toStringTree() const override;
 
-	static const char* const TYPE_NAME;
+  static const char *const TYPE_NAME;
 protected:
-	RefBaseAST down;
-	RefBaseAST right;
+  RefBaseAST down;
+  RefBaseAST right;
 private:
-	void doWorkForFindAll(ANTLR_USE_NAMESPACE(std)vector<RefAST>& v,
-								 RefAST target,
-								 bool partialMatch);
+  void doWorkForFindAll(ANTLR_USE_NAMESPACE(std)vector<RefAST> &v,
+                        const RefAST &target,
+                        bool partialMatch);
 };
 
 /** Is node t equal to this in terms of token type and text?
  */
-inline bool BaseAST::equals(RefAST t) const
-{
-	if (!t)
-		return false;
-	return ((getType() == t->getType()) && (getText() == t->getText()));
+inline bool BaseAST::equals(RefAST t) const {
+  if (!t)
+    return false;
+  return ((getType() == t->getType()) && (getText() == t->getText()));
 }
 
 #ifdef ANTLR_CXX_SUPPORTS_NAMESPACE
 }
 #endif
 
-#endif //INC_BaseAST_hpp__
+#endif //INC_BaseAST_hpp_

@@ -87,7 +87,7 @@ const std::string& SpDDouble::TypeStr() const { return str;}
 
 const DType   SpDString::t=GDL_STRING; // type ID
 const string  SpDString::str("STRING"); // type string
-const DString SpDString::zero(""); // zero string
+const DString SpDString::zero; // zero string
 BaseGDL* SpDString::GetTag() const { return new SpDString(*this);}
 DType   SpDString::Type()    const { return t;}
 const std::string& SpDString::TypeStr() const { return str;}
@@ -95,9 +95,8 @@ const std::string& SpDString::TypeStr() const { return str;}
 const DType    SpDStruct::t=GDL_STRUCT;      // type ID
 const string   SpDStruct::str("STRUCT"); // type string
 const SpDStruct::Ty  SpDStruct::zero=0; // zero struct, special meaning
-BaseGDL* SpDStruct::GetTag() const 
-{ 
-  SpDStruct* newTag = new SpDStruct(*this);
+BaseGDL* SpDStruct::GetTag() const {
+  auto newTag = new SpDStruct(*this);
   newTag->MakeOwnDesc();
   return newTag;
 }
@@ -146,9 +145,8 @@ BaseGDL* SpDDouble::GetInstance() const { return new Data_<SpDDouble>(dim);}
 BaseGDL* SpDString::GetInstance() const { return new Data_<SpDString>(dim);}
 BaseGDL* SpDPtr::GetInstance() const    { return new Data_<SpDPtr>(dim);}
 BaseGDL* SpDObj::GetInstance() const    { return new Data_<SpDObj>(dim);}
-BaseGDL* SpDStruct::GetInstance() const 
-{ 
-  DStructGDL* newInstance = new DStructGDL(desc,dim);
+BaseGDL* SpDStruct::GetInstance() const {
+  auto newInstance = new DStructGDL(desc, dim);
   newInstance->MakeOwnDesc();
   return newInstance;
 }
@@ -168,9 +166,8 @@ BaseGDL* SpDDouble::GetEmptyInstance() const { return new Data_<SpDDouble>( dim,
 BaseGDL* SpDString::GetEmptyInstance() const { return new Data_<SpDString>( dim, BaseGDL::NOALLOC);}
 BaseGDL* SpDPtr::GetEmptyInstance() const    { return new Data_<SpDPtr>( dim, BaseGDL::NOALLOC);}
 BaseGDL* SpDObj::GetEmptyInstance() const    { return new Data_<SpDObj>( dim, BaseGDL::NOALLOC);}
-BaseGDL* SpDStruct::GetEmptyInstance() const 
-{ 
-  DStructGDL* newInstance = new DStructGDL( desc, dim, BaseGDL::NOALLOC);
+BaseGDL* SpDStruct::GetEmptyInstance() const {
+  auto newInstance = new DStructGDL(desc, dim, BaseGDL::NOALLOC);
   newInstance->MakeOwnDesc();
   return newInstance;
 }
@@ -179,44 +176,48 @@ BaseGDL* SpDComplexDbl::GetEmptyInstance() const { return new Data_<SpDComplexDb
 
 SpDByte::SpDByte(): BaseGDL() {}
 SpDByte::SpDByte( const dimension& dim_): BaseGDL(dim_) {}
-SpDByte::~SpDByte() {}
+SpDByte::~SpDByte() = default;
 
 SpDInt::SpDInt(): BaseGDL() {}
 SpDInt::SpDInt( const dimension& dim_): BaseGDL(dim_) {}
-SpDInt::~SpDInt() {}
+SpDInt::~SpDInt() = default;
 
 SpDUInt::SpDUInt(): BaseGDL() {}
 SpDUInt::SpDUInt( const dimension& dim_): BaseGDL(dim_) {}
-SpDUInt::~SpDUInt() {};
+SpDUInt::~SpDUInt() = default;
+SizeT SpDUInt::NBytes() const {
+  return (this->N_Elements() * sizeof(Ty));
+}
 
 SpDLong::SpDLong(): BaseGDL() {}
 SpDLong::SpDLong( const dimension& dim_): BaseGDL(dim_) {}
-SpDLong::~SpDLong() {}
+SpDLong::~SpDLong() = default;
 
 SpDULong::SpDULong(): BaseGDL() {}
 SpDULong::SpDULong( const dimension& dim_): BaseGDL(dim_) {}
-SpDULong::~SpDULong() {}
+SpDULong::~SpDULong() = default;
 
 SpDLong64::SpDLong64(): BaseGDL() {}
 SpDLong64::SpDLong64( const dimension& dim_): BaseGDL(dim_) {}
-SpDLong64::~SpDLong64() {}
+SpDLong64::~SpDLong64() = default;
 
 SpDULong64::SpDULong64(): BaseGDL() {}
 SpDULong64::SpDULong64( const dimension& dim_): BaseGDL(dim_) {}
-SpDULong64::~SpDULong64() {}
+SpDULong64::~SpDULong64() = default;
 
 SpDFloat::SpDFloat(): BaseGDL() {}
 SpDFloat::SpDFloat( const dimension& dim_): BaseGDL(dim_) {}
-SpDFloat::~SpDFloat() {}
+SpDFloat::~SpDFloat() = default;
 
 SpDDouble::SpDDouble(): BaseGDL() {}
 SpDDouble::SpDDouble( const dimension& dim_): BaseGDL(dim_) {}
-SpDDouble::~SpDDouble() {}
+SpDDouble::~SpDDouble() = default;
 
 SpDString::SpDString(): BaseGDL() {}
 SpDString::SpDString( const dimension& dim_): BaseGDL(dim_) {}
-SpDString::~SpDString() {}
+SpDString::~SpDString() = default;
 
+#if 0
 SpDStruct::SpDStruct( DStructDesc* desc_): 
   BaseGDL(),
   desc(desc_) 
@@ -224,6 +225,7 @@ SpDStruct::SpDStruct( DStructDesc* desc_):
   //  if( desc != NULL && desc->IsUnnamed()) 
   //    desc = new DStructDesc( desc);
 }
+#endif
 
 SpDStruct::SpDStruct( DStructDesc* desc_, const dimension& dim_): 
   BaseGDL(dim_),
@@ -236,24 +238,25 @@ SpDStruct::SpDStruct( DStructDesc* desc_, const dimension& dim_):
 
 SpDStruct::~SpDStruct() 
 {
-  if( desc != NULL && desc->IsUnnamed()) desc->Delete();
+  if (desc != nullptr && desc->IsUnnamed())
+    desc->Delete();
 }
 
 SpDPtr::SpDPtr(): BaseGDL() {}
 SpDPtr::SpDPtr( const dimension& dim_): BaseGDL(dim_) {}
-SpDPtr::~SpDPtr() {}
+SpDPtr::~SpDPtr() = default;
 
 SpDObj::SpDObj(): BaseGDL() {}
 SpDObj::SpDObj( const dimension& dim_): BaseGDL(dim_) {}
-SpDObj::~SpDObj() {}
+SpDObj::~SpDObj() = default;
 
 SpDComplex::SpDComplex(): BaseGDL() {}
 SpDComplex::SpDComplex( const dimension& dim_): BaseGDL(dim_) {}
-SpDComplex::~SpDComplex() {}
+SpDComplex::~SpDComplex() = default;
 
 SpDComplexDbl::SpDComplexDbl(): BaseGDL() {}
 SpDComplexDbl::SpDComplexDbl( const dimension& dim_): BaseGDL(dim_) {}
-SpDComplexDbl::~SpDComplexDbl() {}
+SpDComplexDbl::~SpDComplexDbl() = default;
 
 
 

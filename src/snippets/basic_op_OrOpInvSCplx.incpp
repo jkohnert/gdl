@@ -1,7 +1,7 @@
 //  e1 Or e2=StrictScalar() : e1 everywhere except if e1==0 
-Data_* right = static_cast<Data_*> (r);
+auto right = dynamic_cast<Data_*> (r);
 
-ULong nEl = N_Elements();
+const auto nEl = static_cast<OMPInt>(N_Elements());
 assert(nEl);
 Ty s = (*right)[0];
 if (nEl == 1) {
@@ -13,7 +13,7 @@ if ((GDL_NTHREADS = parallelize(nEl)) == 1) {
   for (OMPInt i = 0; i < nEl; ++i) if ((*this)[i]==zero) (*this)[i] = s;
 } else {
   TRACEOMP(__FILE__, __LINE__)
-#pragma omp parallel for num_threads(GDL_NTHREADS)
+#pragma omp parallel for num_threads(GDL_NTHREADS) default(none) shared(nEl, s)
     for (OMPInt i = 0; i < nEl; ++i) if ((*this)[i]==zero) (*this)[i] = s;
 }
 return this;

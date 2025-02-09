@@ -493,6 +493,196 @@ template<> Data_<SpDObj>::Data_(const dimension& dim_, BaseGDL::InitType iT, DDo
   }
 }
 
+template<class Sp> Data_<Sp>::Data_(const SizeT &dimSize_, BaseGDL::InitType iT, DDouble off, DDouble inc):
+    Sp(dimension(dimSize_)), dd((iT == BaseGDL::NOALLOC) ? 0 : this->dim.NDimElements(), false) {
+  this->dim.Purge();
+
+  if (iT == BaseGDL::NOZERO)
+    return;  //very frequent
+
+  if (iT == BaseGDL::ZERO) { //rather frequent
+    SizeT sz = dd.size();
+    if ((GDL_NTHREADS = parallelize(sz, TP_ARRAY_INITIALISATION)) == 1) { //most frequent
+      for (SizeT i = 0; i < sz; ++i)
+        (*this)[i] = 0;
+    } else {
+      TRACEOMP(__FILE__, __LINE__)
+#pragma omp parallel for num_threads(GDL_NTHREADS) default(none) shared(sz)
+      for (SizeT i = 0; i < sz; ++i)
+        (*this)[i] = 0;
+    }
+  } else if (iT == BaseGDL::INDGEN) { //less frequent
+    SizeT sz = dd.size();
+    if ((GDL_NTHREADS = parallelize(sz, TP_ARRAY_INITIALISATION)) == 1) { //most frequent
+      if (off == 0 && inc == 1) {
+        for (SizeT i = 0; i < sz; ++i)
+          (*this)[i] = i;
+      } else {
+        for (SizeT i = 0; i < sz; ++i)
+          (*this)[i] = off + (double) i * inc;
+      }
+    } else {
+      if (off == 0 && inc == 1) {
+        TRACEOMP(__FILE__, __LINE__)
+#pragma omp parallel for num_threads(GDL_NTHREADS) default(none) shared(sz)
+        for (SizeT i = 0; i < sz; ++i)
+          (*this)[i] = i;
+      } else {
+        TRACEOMP(__FILE__, __LINE__)
+#pragma omp parallel for num_threads(GDL_NTHREADS) default(none) shared(inc, off, sz)
+        for (SizeT i = 0; i < sz; ++i)
+          (*this)[i] = off + (double) i * inc;
+      }
+    }
+  }
+}
+
+//IDL uses floats increments and offset for floats and complex (normal) .
+template<> Data_<SpDFloat>::Data_(const SizeT &dimSize_, BaseGDL::InitType iT, DDouble off, DDouble inc):
+    SpDFloat(dimension(dimSize_)), dd((iT == BaseGDL::NOALLOC) ? 0 : this->dim.NDimElements(), false) {
+  this->dim.Purge();
+
+  if (iT == BaseGDL::NOZERO)
+    return; //very frequent
+
+  if (iT == BaseGDL::ZERO) { //rather frequent
+    SizeT sz = dd.size();
+    if ((GDL_NTHREADS = parallelize(sz, TP_ARRAY_INITIALISATION)) == 1) { //most frequent
+      for (SizeT i = 0; i < sz; ++i)
+        (*this)[i] = 0;
+    } else {
+      TRACEOMP(__FILE__, __LINE__)
+#pragma omp parallel for num_threads(GDL_NTHREADS) default(none) shared(sz)
+      for (SizeT i = 0; i < sz; ++i)
+        (*this)[i] = 0;
+    }
+  } else if (iT == BaseGDL::INDGEN) { //less frequent
+    SizeT sz = dd.size();
+    if ((GDL_NTHREADS = parallelize(sz, TP_ARRAY_INITIALISATION)) == 1) { //most frequent
+      if (off == 0 && inc == 1) {
+        for (SizeT i = 0; i < sz; ++i)
+          (*this)[i] = static_cast<DFloat>(i);
+      } else {
+        auto f_off = static_cast<DFloat>(off);
+        auto f_inc = static_cast<DFloat>(inc);
+        for (SizeT i = 0; i < sz; ++i)
+          (*this)[i] = f_off + i * f_inc;
+      }
+    } else {
+      if (off == 0 && inc == 1) {
+        TRACEOMP(__FILE__, __LINE__)
+#pragma omp parallel for num_threads(GDL_NTHREADS) default(none) shared(sz)
+        for (SizeT i = 0; i < sz; ++i)
+          (*this)[i] = static_cast<DFloat>(i);
+      } else {
+        auto f_off = static_cast<DFloat>(off);
+        auto f_inc = static_cast<DFloat>(inc);
+        TRACEOMP(__FILE__, __LINE__)
+#pragma omp parallel for num_threads(GDL_NTHREADS) default(none) shared(f_inc, f_off, sz)
+        for (SizeT i = 0; i < sz; ++i)
+          (*this)[i] = f_off + static_cast<DFloat>(i) * f_inc;
+      }
+    }
+  }
+}
+
+template<> Data_<SpDComplex>::Data_(const SizeT &dimSize_, BaseGDL::InitType iT, DDouble off, DDouble inc):
+    SpDComplex(dimension(dimSize_)), dd((iT == BaseGDL::NOALLOC) ? 0 : this->dim.NDimElements(), false) {
+  this->dim.Purge();
+
+  if (iT == BaseGDL::NOZERO)
+    return; //very frequent
+
+  if (iT == BaseGDL::ZERO) { //rather frequent
+    SizeT sz = dd.size();
+    if ((GDL_NTHREADS = parallelize(sz, TP_ARRAY_INITIALISATION)) == 1) { //most frequent
+      for (SizeT i = 0; i < sz; ++i)
+        (*this)[i] = 0;
+    } else {
+      TRACEOMP(__FILE__, __LINE__)
+#pragma omp parallel for num_threads(GDL_NTHREADS) default(none) shared(sz)
+      for (SizeT i = 0; i < sz; ++i)
+        (*this)[i] = 0;
+    }
+  } else if (iT == BaseGDL::INDGEN) { //less frequent
+    SizeT sz = dd.size();
+    if ((GDL_NTHREADS = parallelize(sz, TP_ARRAY_INITIALISATION)) == 1) { //most frequent
+      if (off == 0 && inc == 1) {
+        for (SizeT i = 0; i < sz; ++i)
+          (*this)[i] = static_cast<DFloat>(i);
+      } else {
+        auto f_off = static_cast<DFloat>(off);
+        auto f_inc = static_cast<DFloat>(inc);
+        for (SizeT i = 0; i < sz; ++i)
+          (*this)[i] = f_off + static_cast<DFloat>(i) * f_inc;
+      }
+    } else {
+      if (off == 0 && inc == 1) {
+        TRACEOMP(__FILE__, __LINE__)
+#pragma omp parallel for num_threads(GDL_NTHREADS) default(none) shared(sz)
+        for (SizeT i = 0; i < sz; ++i)
+          (*this)[i] = static_cast<DFloat>(i);
+      } else {
+        auto f_off = static_cast<DFloat>(off);
+        auto f_inc = static_cast<DFloat>(inc);
+        TRACEOMP(__FILE__, __LINE__)
+#pragma omp parallel for num_threads(GDL_NTHREADS) default(none) shared(f_inc, f_off, sz)
+        for (SizeT i = 0; i < sz; ++i)
+          (*this)[i] = f_off + static_cast<DFloat>(i) * f_inc;
+      }
+    }
+  }
+}
+
+template<> Data_<SpDString>::Data_(const SizeT &dimSize_, BaseGDL::InitType iT, DDouble, DDouble):
+    SpDString(dimension(dimSize_)), dd((iT == BaseGDL::NOALLOC) ? 0 : this->dim.NDimElements(), false) {
+  dim.Purge();
+
+  if (iT == BaseGDL::INDGEN)
+    throw GDLException("DStringGDL(dim,InitType=INDGEN) called.");
+}
+
+template<> Data_<SpDPtr>::Data_(const SizeT &dimSize_, BaseGDL::InitType iT, DDouble, DDouble):
+    SpDPtr(dimension(dimSize_)), dd((iT == BaseGDL::NOALLOC) ? 0 : this->dim.NDimElements(), false) {
+  dim.Purge();
+
+  if (iT == BaseGDL::INDGEN)
+    throw GDLException("DPtrGDL(dim,InitType=INDGEN) called.");
+
+  if (iT != BaseGDL::NOALLOC && iT != BaseGDL::NOZERO) {
+    SizeT sz = dd.size();
+    if ((GDL_NTHREADS = parallelize(sz, TP_ARRAY_INITIALISATION)) == 1) { //most frequent
+      for (SizeT i = 0; i < sz; ++i)
+        (*this)[i] = 0;
+    } else {
+      TRACEOMP(__FILE__, __LINE__)
+#pragma omp parallel for num_threads(GDL_NTHREADS) default(none) shared(sz)
+      for (SizeT i = 0; i < sz; ++i)
+        (*this)[i] = 0;
+    }
+  }
+}
+template<> Data_<SpDObj>::Data_(const SizeT &dimSize_, BaseGDL::InitType iT, DDouble, DDouble):
+    SpDObj(dimension(dimSize_)), dd((iT == BaseGDL::NOALLOC) ? 0 : this->dim.NDimElements(), false) {
+  dim.Purge();
+
+  if (iT == BaseGDL::INDGEN)
+    throw GDLException("DObjGDL(dim,InitType=INDGEN) called.");
+
+  if (iT != BaseGDL::NOALLOC && iT != BaseGDL::NOZERO) {
+    SizeT sz = dd.size();
+    if ((GDL_NTHREADS = parallelize(sz, TP_ARRAY_INITIALISATION)) == 1) { //most frequent
+      for (SizeT i = 0; i < sz; ++i)
+        (*this)[i] = 0;
+    } else {
+      TRACEOMP(__FILE__, __LINE__)
+#pragma omp parallel for num_threads(GDL_NTHREADS) default(none) shared(sz)
+      for (SizeT i = 0; i < sz; ++i)
+        (*this)[i] = 0;
+    }
+  }
+}
+
 // c-i
 //template<class Sp>
 //Data_<Sp>::Data_(const Data_& d_): Sp(d_.dim), dd(d_.dd) {  }

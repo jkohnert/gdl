@@ -18,7 +18,6 @@
 #cmakedefine HAVE_LIBREADLINE 1
 #cmakedefine HAVE_LIBWXWIDGETS 1
 #cmakedefine HAVE_LIBZ 1
-#cmakedefine HAVE_LOCALE_H 1
 #cmakedefine HAVE_SBRK 1
 #cmakedefine HAVE_MALLINFO 1
 #cmakedefine HAVE_MALLINFO2 1
