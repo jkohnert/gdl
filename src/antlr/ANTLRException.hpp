@@ -1,5 +1,5 @@
-#ifndef INC_ANTLRException_hpp__
-#define INC_ANTLRException_hpp__
+#ifndef INC_ANTLRException_hpp_
+#define INC_ANTLRException_hpp_
 
 /* ANTLR Translator Generator
  * Project led by Terence Parr at http://www.jGuru.com
@@ -10,50 +10,49 @@
 
 #include <antlr/config.hpp>
 #include <string>
+#include <stdexcept>
 
 #ifdef ANTLR_CXX_SUPPORTS_NAMESPACE
 namespace antlr {
 #endif
 
-class ANTLR_API ANTLRException
-{
+class ANTLR_API ANTLRException : std::exception {
 public:
-	/// Create ANTLR base exception without error message
-	ANTLRException() : text("")
-	{
-	}
-	/// Create ANTLR base exception with error message
-	ANTLRException(const ANTLR_USE_NAMESPACE(std)string& s)
-	: text(s)
-	{
-	}
-	virtual ~ANTLRException() throw()
-	{
-	}
+  /// Create ANTLR base exception without error message
+  ANTLRException() : msg("") {
+  }
+  /// Create ANTLR base exception with error message
+  ANTLRException(const ANTLR_USE_NAMESPACE(std)string &s)
+      : msg(s) {
+  }
+  virtual ~ANTLRException() throw() {
+  }
 
-	/** Return complete error message with line/column number info (if present)
-	 * @note for your own exceptions override this one. Call getMessage from
-	 * here to get the 'clean' error message stored in the text attribute.
-	 */
-	virtual ANTLR_USE_NAMESPACE(std)string toString() const
-	{
-		return text;
-	}
+  /**
+   * Return complete error message with line/column number info (if present)
+   *
+   * @note for your own exceptions override this one. Call getMessage from
+   * here to get the 'clean' error message stored in the text attribute.
+   */
+  virtual ANTLR_USE_NAMESPACE(std)string toString() const {
+    return msg.what();
+  }
 
-	/** Return error message without additional info (if present)
-	 * @note when making your own exceptions classes override toString
-	 * and call in toString getMessage which relays the text attribute
-	 * from here.
-	 */
-	virtual ANTLR_USE_NAMESPACE(std)string getMessage() const
-	{
-		return text;
-	}
-private:
-	ANTLR_USE_NAMESPACE(std)string text;
+  /**
+   * Return error message without additional info (if present)
+   *
+   * @note when making your own exceptions classes override toString
+   * and call in toString getMessage which relays the text attribute
+   * from here.
+   */
+  virtual ANTLR_USE_NAMESPACE(std)string getMessage() const {
+    return msg.what();
+  }
+protected:
+  ANTLR_USE_NAMESPACE(std)runtime_error msg;
 };
 #ifdef ANTLR_CXX_SUPPORTS_NAMESPACE
 }
 #endif
 
-#endif //INC_ANTLRException_hpp__
+#endif //INC_ANTLRException_hpp_

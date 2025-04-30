@@ -356,7 +356,7 @@ public:
     // no zeroing, here the new variable is created 
     // zero only for GDL_PTR and GDL_OBJ (because of ref counting)
     if( top->Type() == GDL_PTR || top->Type() == GDL_OBJ)
-      newData=top->New( dim);//, BaseGDL::NOZERO);
+      newData=top->New(dim, BaseGDL::ZERO);//, BaseGDL::NOZERO);
     else
       newData=top->New( dim, BaseGDL::NOZERO);
 

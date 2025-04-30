@@ -171,6 +171,10 @@ BaseGDL* BaseGDL::New( const dimension& dim_, InitType noZero) const
 {
   throw GDLException("BaseGDL::New(...) called.");
 }
+BaseGDL* BaseGDL::New(const SizeT& dimSize_, InitType noZero) const
+{
+  throw GDLException("BaseGDL::New(...) called.");
+}
 BaseGDL* BaseGDL::NewResult() const
 {
   throw GDLException("BaseGDL::NewResult() called.");

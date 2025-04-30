@@ -521,7 +521,8 @@ public:
   virtual const std::string& TypeStr() const;
   virtual bool          EqType( const BaseGDL*) const;
   virtual void* DataAddr();// SizeT elem=0);
-  virtual BaseGDL* New( const dimension& dim_, InitType noZero=ZERO) const;
+  virtual BaseGDL* New(const dimension &dim_, InitType noZero) const;
+  virtual BaseGDL* New(const SizeT& dimSize_, InitType noZero) const;
   virtual BaseGDL* NewResult() const;
   virtual BaseGDL* Dup() const;
 //   virtual BaseGDL* Dup( char*) const; 

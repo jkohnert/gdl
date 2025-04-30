@@ -1,6 +1,6 @@
-  Data_* right = static_cast<Data_*> (r);
+  auto right = dynamic_cast<Data_*> (r);
 
-  ULong nEl = N_Elements();
+  const auto nEl = static_cast<OMPInt>(N_Elements());
   assert(nEl);
   if (nEl == 1) {
     if ((*right)[0] == zero) (*this)[0] = zero;
@@ -11,7 +11,7 @@
     for (OMPInt i = 0; i < nEl; ++i) if ((*right)[i] == zero) (*this)[i] = zero;
   } else {
     TRACEOMP(__FILE__, __LINE__)
-#pragma omp parallel for num_threads(GDL_NTHREADS)
-      for (OMPInt i = 0; i < nEl; ++i) if ((*right)[i] == zero) (*this)[i] = zero;
+#pragma omp parallel for num_threads(GDL_NTHREADS) default(none) shared(nEl, right)
+    for (OMPInt i = 0; i < nEl; ++i) if ((*right)[i] == zero) (*this)[i] = zero;
   }
   return this;

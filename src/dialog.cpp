@@ -44,9 +44,7 @@ namespace lib {
       TITLE=title)
      */
 
-#ifdef HAVE_LOCALE_H
     setlocale(LC_ALL, "C");
-#endif
 
     bool isdefault_extension = false;
     bool isdirectory = false;
@@ -323,9 +321,7 @@ namespace lib {
 
   BaseGDL* dialog_message_wxwidgets(EnvT* e) {
 
-#ifdef HAVE_LOCALE_H
     setlocale(LC_ALL, "C");
-#endif
 
     DStringGDL* messagestr;
     bool iscancel = false;

@@ -113,7 +113,10 @@ static	void operator delete( void *ptr);
   // new array, no zero or indgen
   Data_(const dimension& dim_,  BaseGDL::InitType iT,
         DDouble start = 0, DDouble increment = 1);
-  
+
+  // convenience constructor, since we often call using integer dimensions
+  Data_(const SizeT &dimSize_, BaseGDL::InitType iT, DDouble start = 0, DDouble increment = 1);
+
   // new array, zero fields
   Data_(const dimension& dim_);
 

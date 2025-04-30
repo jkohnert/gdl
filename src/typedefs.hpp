@@ -115,7 +115,7 @@ typedef unsigned long long int      SizeT;
 typedef long long int RangeT;
 typedef long long int OMPInt;
 
-const SizeT MAXRANK=8;         // arrays are limited to 8 dimensions
+constexpr unsigned char MAXRANK = 8; // arrays are limited to 8 dimensions
 const std::string MAXRANK_STR("8");  // for use in strings (error messages)
 const std::string INTERNAL_LIBRARY_STR("<INTERNAL_LIBRARY>");
 
